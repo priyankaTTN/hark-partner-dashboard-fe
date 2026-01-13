@@ -20,7 +20,6 @@ npm --version
 1. **Clone the repository** (if you haven't already):
    ```bash
    git clone <repository-url>
-   cd SiriusXMDashboardShandcn/my-app
    ```
 
 2. **Install dependencies**:
