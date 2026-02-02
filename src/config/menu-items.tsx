@@ -58,5 +58,27 @@ export const menuItems: MenuItem[] = [
       },
     ],
   },
+  {
+    title: "Taxonomy",
+    url: "#",
+    icon: LightbulbIcon,
+    children: [
+      {
+        title: "Topic",
+        url: "#",
+        icon: LightbulbIcon,
+      },
+   {
+    title: "Genre",
+    url: "#",
+    icon: LightbulbIcon,
+  },
+  {
+    title: "Tones",
+    url: "#",
+    icon: LightbulbIcon,
+  },
 ]
+  }]
+    
 

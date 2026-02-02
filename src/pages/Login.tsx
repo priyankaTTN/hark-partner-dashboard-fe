@@ -1,17 +1,20 @@
 import * as React from "react"
+import { useNavigate, Navigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-interface LoginProps {
-  onLogin: () => void
-}
-
-export function Login({ onLogin }: LoginProps) {
+export function Login() {
+  const navigate = useNavigate()
   const [username, setUsername] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(false)
   const [error, setError] = React.useState("")
+
+  // Redirect if already authenticated
+  if (localStorage.getItem("isAuthenticated") === "true") {
+    return <Navigate to="/dashboard/suggested-clips" replace />
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,8 +33,9 @@ export function Login({ onLogin }: LoginProps) {
       // Check credentials
       if (username === "admin" && password === "admin") {
         // On successful login
+        localStorage.setItem("isAuthenticated", "true")
         setIsLoading(false)
-        onLogin()
+        navigate("/dashboard/suggested-clips", { replace: true })
       } else {
         setError("Invalid username or password")
         setIsLoading(false)

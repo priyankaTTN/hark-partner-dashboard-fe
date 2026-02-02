@@ -1,4 +1,5 @@
 import * as React from "react"
+import { NavLink, useLocation } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
@@ -12,20 +13,50 @@ import {
 import { menuItems } from "@/config/menu-items"
 import { PlusIcon } from "@/components/icons"
 
-export function AppSidebar() {
-  const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set())
-
-  const toggleExpanded = (title: string) => {
-    setExpandedItems((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(title)) {
-        newSet.delete(title)
-      } else {
-        newSet.add(title)
-      }
-      return newSet
-    })
+const getRouteFromTitle = (title: string): string => {
+  const titleMap: Record<string, string> = {
+    "Suggested Clips": "/dashboard/suggested-clips",
+    "Produced Clips": "/dashboard/produced-clips",
+    "Live": "/dashboard/live",
+    "Drafts": "/dashboard/drafts",
+    "Topic": "/dashboard/topic",
+    "Genre": "/dashboard/genre",
+    "Tones": "/dashboard/tone",
   }
+  return titleMap[title] || "/dashboard/suggested-clips"
+}
+
+const isPageActive = (title: string, location: ReturnType<typeof useLocation>): boolean => {
+  const route = getRouteFromTitle(title)
+  return location.pathname === route
+}
+
+export function AppSidebar() {
+  const location = useLocation()
+
+  // Initialize expanded items - auto-expand parent menus if their children are active
+  const initializeExpandedItems = () => {
+    const expanded = new Set<string>()
+    menuItems.forEach((item) => {
+      if (item.children) {
+        const hasActiveChild = item.children.some(
+          (child) => child.isActive || isPageActive(child.title, location)
+        )
+        if (hasActiveChild) {
+          expanded.add(item.title)
+        }
+      }
+    })
+    return expanded
+  }
+
+  const [expandedItems, setExpandedItems] = React.useState<Set<string>>(() => initializeExpandedItems())
+
+  // Update expanded items when location changes
+  React.useEffect(() => {
+    const newExpanded = initializeExpandedItems()
+    setExpandedItems(newExpanded)
+  }, [location.pathname])
 
   return (
     <Sidebar collapsible="icon" className="bg-[#1a1f3a] border-r border-[#2a2f4a]">
@@ -40,17 +71,25 @@ export function AppSidebar() {
                 return (
                   <SidebarMenuItem key={item.title}>
                     <div>
-                      <SidebarMenuButton
-                        asChild={!hasChildren}
-                        isActive={item.isActive}
-                        className={cn(
-                          "text-white hover:bg-[#2a2f4a] rounded-md",
-                          item.isActive && "bg-[#2a2f4a]",
-                          hasChildren && "cursor-pointer"
-                        )}
-                        onClick={hasChildren ? () => toggleExpanded(item.title) : undefined}
-                      >
-                        {hasChildren ? (
+                      {hasChildren ? (
+                        <SidebarMenuButton
+                          asChild={false}
+                          isActive={false}
+                          className={cn(
+                            "text-white hover:bg-[#2a2f4a] rounded-md cursor-pointer"
+                          )}
+                          onClick={() => {
+                            setExpandedItems((prev) => {
+                              const newSet = new Set(prev)
+                              if (newSet.has(item.title)) {
+                                newSet.delete(item.title)
+                              } else {
+                                newSet.add(item.title)
+                              }
+                              return newSet
+                            })
+                          }}
+                        >
                           <div className="flex items-center gap-3 w-full">
                             <item.icon className="size-5 shrink-0" />
                             <span className="flex-1">{item.title}</span>
@@ -68,16 +107,28 @@ export function AppSidebar() {
                             )}
                             <PlusIcon />
                           </div>
-                        ) : (
-                          <a href={item.url} className="flex items-center gap-3 w-full">
+                        </SidebarMenuButton>
+                      ) : (
+                        <SidebarMenuButton
+                          asChild
+                          isActive={item.isActive || isPageActive(item.title, location)}
+                          className={cn(
+                            "text-white hover:bg-[#2a2f4a] rounded-md",
+                            (item.isActive || isPageActive(item.title, location)) && "bg-[#2a2f4a]"
+                          )}
+                        >
+                          <NavLink
+                            to={getRouteFromTitle(item.title)}
+                            className="flex items-center gap-3 w-full"
+                          >
                             <item.icon className="size-5 shrink-0" />
                             <span className="flex-1">{item.title}</span>
                             {item.action && (
                               <item.action className="size-4 shrink-0 ml-auto" />
                             )}
-                          </a>
-                        )}
-                      </SidebarMenuButton>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      )}
                       {hasChildren && (
                         <div
                           className={cn(
@@ -86,22 +137,28 @@ export function AppSidebar() {
                           )}
                         >
                           <div className="pl-8 pt-1 space-y-1">
-                            {item.children?.map((child) => (
-                              <SidebarMenuButton
-                                key={child.title}
-                                asChild
-                                isActive={child.isActive}
-                                className={cn(
-                                  "text-white hover:bg-[#2a2f4a] rounded-md",
-                                  child.isActive && "bg-[#2a2f4a]"
-                                )}
-                              >
-                                <a href={child.url} className="flex items-center gap-3 w-full">
-                                  <child.icon className="size-4 shrink-0" />
-                                  <span className="flex-1 text-sm">{child.title}</span>
-                                </a>
-                              </SidebarMenuButton>
-                            ))}
+                            {item.children?.map((child) => {
+                              const isChildActive = child.isActive || isPageActive(child.title, location)
+                              return (
+                                <SidebarMenuButton
+                                  key={child.title}
+                                  asChild
+                                  isActive={isChildActive}
+                                  className={cn(
+                                    "text-white hover:bg-[#2a2f4a] rounded-md",
+                                    isChildActive && "bg-[#2a2f4a]"
+                                  )}
+                                >
+                                  <NavLink
+                                    to={getRouteFromTitle(child.title)}
+                                    className="flex items-center gap-3 w-full"
+                                  >
+                                    <child.icon className="size-4 shrink-0" />
+                                    <span className="flex-1 text-sm">{child.title}</span>
+                                  </NavLink>
+                                </SidebarMenuButton>
+                              )
+                            })}
                           </div>
                         </div>
                       )}

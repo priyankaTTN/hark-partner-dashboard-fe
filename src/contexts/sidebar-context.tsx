@@ -57,7 +57,7 @@ export const SidebarProvider = React.forwardRef<HTMLDivElement, SidebarProviderP
 
     return (
       <SidebarContext.Provider value={value}>
-        <div ref={ref} className={cn("flex min-h-screen w-full", className)} {...props}>
+        <div ref={ref} className={cn("flex h-screen w-full overflow-hidden", className)} {...props}>
           {children}
         </div>
       </SidebarContext.Provider>
