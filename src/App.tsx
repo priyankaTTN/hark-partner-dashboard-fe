@@ -7,8 +7,8 @@ import { Genre } from "@/pages/Genre"
 import { Topic } from "@/pages/Topic"
 import { SuggestedClips } from "@/pages/SuggestedClips"
 import { ProducedClips } from "@/pages/ProducedClips"
-import { Live } from "@/pages/Live"
-import { Drafts } from "@/pages/Drafts"
+import { Clips } from "@/pages/Clips"
+import { Playlists } from "@/pages/Playlists"
 
 export function App() {
   return (
@@ -28,8 +28,8 @@ export function App() {
         <Route path="tone" element={<Tone />} />
         <Route path="topic" element={<Topic />} />
         <Route path="genre" element={<Genre />} />
-        <Route path="live" element={<Live />} />
-        <Route path="drafts" element={<Drafts />} />
+        <Route path="clips" element={<Clips />} />
+        <Route path="playlists" element={<Playlists />} />
       </Route>
       <Route path="/" element={<Navigate to="/dashboard/suggested-clips" replace />} />
       <Route path="*" element={<Navigate to="/dashboard/suggested-clips" replace />} />

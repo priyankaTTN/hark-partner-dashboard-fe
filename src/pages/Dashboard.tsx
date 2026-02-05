@@ -29,7 +29,7 @@ export function Dashboard() {
             Logout
           </Button>
         </header>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1">
           <Outlet />
         </div>
       </SidebarInset>

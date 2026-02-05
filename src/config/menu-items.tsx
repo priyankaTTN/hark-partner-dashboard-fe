@@ -27,18 +27,11 @@ export const menuItems: MenuItem[] = [
     title: "Playlists",
     url: "#",
     icon: RadioIcon,
-    children: [
-      {
-        title: "Live",
-        url: "#",
-        icon: CircleDotIcon,
-      },
-      {
-        title: "Drafts",
-        url: "#",
-        icon: FileTextIcon,
-      },
-    ],
+  },
+  {
+    title: "Clips",
+    url: "#",
+    icon: RadioIcon,
   },
   {
     title: "Curation",

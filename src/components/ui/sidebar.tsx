@@ -20,7 +20,7 @@ const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
       <aside
         ref={ref}
         className={cn(
-          "flex h-screen flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-300",
+          "flex min-h-screen flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-300",
           width,
           className
         )}
@@ -182,7 +182,7 @@ const SidebarInset = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLD
   ({ className, ...props }, ref) => (
     <main
       ref={ref}
-      className={cn("flex flex-1 flex-col overflow-hidden", className)}
+      className={cn("flex flex-1 flex-col min-h-screen overflow-visible", className)}
       {...props}
     />
   )

@@ -104,8 +104,11 @@ export function Topic() {
 
 
   return (
-    <div>
-      <h1>Topics</h1>
+    <div className="flex flex-col pb-6">
+    {/* Filters Section */}
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-gray-900">Filters</h3>
       <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Input
@@ -117,6 +120,8 @@ export function Topic() {
             aria-label="Search topics"
           />
         </div>
+        </div>
+ 
       </div>
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
         <table className="w-full table-auto">
@@ -213,6 +218,7 @@ export function Topic() {
           </PaginationContent>
         </Pagination>
       </div>
+    </div>
     </div>
   )
 }

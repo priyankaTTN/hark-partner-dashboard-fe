@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react"
 
-const useFetch = (url: string) => {
+type UseFetchOptions = {
+  credentials?: RequestCredentials
+}
+
+const useFetch = (url: string, options: UseFetchOptions = {}) => {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const { credentials } = options
 
   useEffect(() => {
     // Reset loading and error states when URL changes
@@ -13,7 +18,10 @@ const useFetch = (url: string) => {
     // Abort controller for cleanup
     const abortController = new AbortController()
     
-    fetch(url, { signal: abortController.signal })
+    fetch(url, {
+      signal: abortController.signal,
+      ...(credentials !== undefined && { credentials }),
+    })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
@@ -38,7 +46,7 @@ const useFetch = (url: string) => {
     return () => {
       abortController.abort()
     }
-  }, [url])
+  }, [url, credentials])
 
   return { data, loading, error }
 }

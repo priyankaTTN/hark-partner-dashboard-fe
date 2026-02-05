@@ -17,8 +17,8 @@ const getRouteFromTitle = (title: string): string => {
   const titleMap: Record<string, string> = {
     "Suggested Clips": "/dashboard/suggested-clips",
     "Produced Clips": "/dashboard/produced-clips",
-    "Live": "/dashboard/live",
-    "Drafts": "/dashboard/drafts",
+    "Playlists": "/dashboard/playlists",
+    "Clips": "/dashboard/clips",
     "Topic": "/dashboard/topic",
     "Genre": "/dashboard/genre",
     "Tones": "/dashboard/tone",

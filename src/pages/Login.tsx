@@ -1,46 +1,34 @@
 import * as React from "react"
 import { useNavigate, Navigate } from "react-router-dom"
+import { useSelector } from "react-redux"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { login } from "@/store/authSlice"
+import { useAppDispatch, type RootState } from "@/store"
 
 export function Login() {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const { loading: isLoading, errorMessage: error } = useSelector(
+    (state: RootState) => state.auth
+  )
   const [username, setUsername] = React.useState("")
   const [password, setPassword] = React.useState("")
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [error, setError] = React.useState("")
 
   // Redirect if already authenticated
   if (localStorage.getItem("isAuthenticated") === "true") {
-    return <Navigate to="/dashboard/suggested-clips" replace />
+    return <Navigate to="/dashboard/playlists" replace />
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setIsLoading(true)
-
-    // Simulate API call
-    setTimeout(() => {
-      // Basic validation
-      if (!username || !password) {
-        setError("Please fill in all fields")
-        setIsLoading(false)
-        return
-      }
-
-      // Check credentials
-      if (username === "admin" && password === "admin") {
-        // On successful login
-        localStorage.setItem("isAuthenticated", "true")
-        setIsLoading(false)
-        navigate("/dashboard/suggested-clips", { replace: true })
-      } else {
-        setError("Invalid username or password")
-        setIsLoading(false)
-      }
-    }, 1000)
+    if (!username || !password) return
+    dispatch(
+      login(username, password, () => {
+        navigate("/dashboard/playlists", { replace: true })
+      })
+    )
   }
 
   return (
