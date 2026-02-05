@@ -1,7 +1,5 @@
 import {
   RadioIcon,
-  CircleDotIcon,
-  FileTextIcon,
   SparklesIcon,
   LightbulbIcon,
 } from "@/components/icons"

@@ -224,7 +224,7 @@ export function Playlists() {
     credentials: "include",
   })
 
-  const { totalQuestions, questions, totalPages, startIndex, endIndex } = useMemo(() => {
+  const { questions, totalPages } = useMemo(() => {
     const response = data as PlaylistApiResponse | null
     const total = response?.totalQuestions ?? 0
     const list = response?.questions ?? []

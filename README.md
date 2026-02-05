@@ -45,7 +45,7 @@ To start the development server:
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173` (or another port if 5173 is occupied). The dev server supports hot module replacement (HMR), so changes will be reflected automatically in the browser.
+The application will be available at `http://localhost:3000`.
 
 ### Build for Production
 

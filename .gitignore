@@ -86,3 +86,7 @@ Desktop.ini
 
 # Vite
 .vite
+
+# Large binaries / installers (GitHub limit 100 MB)
+*.dmg
+*.pkg

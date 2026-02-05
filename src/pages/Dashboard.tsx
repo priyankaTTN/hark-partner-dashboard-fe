@@ -1,4 +1,3 @@
-import * as React from "react"
 import { Outlet, useNavigate } from "react-router-dom"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
