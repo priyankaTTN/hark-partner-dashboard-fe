@@ -1,4 +1,4 @@
-# Partner Harkaudio Dashboard (FE)
+# Hark Partner Dashboard
 
 A modern dashboard application built with React, TypeScript, Vite, and shadcn/ui components.
 
