@@ -1,4 +1,4 @@
-# SiriusXM Dashboard
+# Partner Harkaudio Dashboard (FE)
 
 A modern dashboard application built with React, TypeScript, Vite, and shadcn/ui components.
 
