@@ -23,7 +23,7 @@ export function App() {
         //   </ProtectedRoute>
         // }
       >
-        <Route index element={<Navigate to="/dashboard/suggested-clips" replace />} />
+        {/* <Route index element={<Navigate to="/dashboard/suggested-clips" replace />} /> */}
         <Route path="suggested-clips" element={<SuggestedClips />} />
         <Route path="produced-clips" element={<ProducedClips />} />
         <Route path="tone" element={<Tone />} />
