@@ -16,11 +16,12 @@ export function App() {
       <Route path="/login" element={<Login />} />
       <Route
         path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
+        element={<Dashboard />}
+        // element={
+        //   <ProtectedRoute>
+        //     <Dashboard />
+        //   </ProtectedRoute>
+        // }
       >
         <Route index element={<Navigate to="/dashboard/suggested-clips" replace />} />
         <Route path="suggested-clips" element={<SuggestedClips />} />
@@ -31,8 +32,8 @@ export function App() {
         <Route path="clips" element={<Clips />} />
         <Route path="playlists" element={<Playlists />} />
       </Route>
-      <Route path="/" element={<Navigate to="/dashboard/suggested-clips" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard/suggested-clips" replace />} />
+      {/* <Route path="/" element={<Navigate to="/dashboard/suggested-clips" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard/suggested-clips" replace />} /> */}
     </Routes>
   )
 }
