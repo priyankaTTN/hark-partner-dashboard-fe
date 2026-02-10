@@ -7,6 +7,13 @@ type FetchAPIOptions = {
   credentials?: RequestCredentials
 }
 
+const getAuthHeaders = (): Record<string, string> => {
+  if (typeof window === "undefined") return {}
+  const token = localStorage.getItem("token")
+  if (token) return { Authorization: `Bearer ${token}` }
+  return {}
+}
+
 export async function fetchAPI<T = unknown>(
   path: string,
   options: FetchAPIOptions = {}
@@ -15,6 +22,7 @@ export async function fetchAPI<T = unknown>(
   const url = `${DASHBOARD_BASE_URL}${path}`
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    ...getAuthHeaders(),
     ...customHeaders,
   }
   const res = await fetch(url, {
@@ -45,6 +53,7 @@ export const login = (username: string, password: string) =>
   fetchAPI<{ token?: string }>("/api/v1/auth/milq", {
     method: "POST",
     body: { username, password },
+    credentials: "include",
   })
 export const fetchMe = () =>
   fetchAPI<{ id: string; email: string; name: string }>("/api/v0/me", {

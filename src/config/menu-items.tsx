@@ -59,17 +59,18 @@ export const menuItems: MenuItem[] = [
         url: "#",
         icon: LightbulbIcon,
       },
-   {
-    title: "Genre",
-    url: "#",
-    icon: LightbulbIcon,
-  },
-  {
-    title: "Tones",
-    url: "#",
-    icon: LightbulbIcon,
+      {
+        title: "Genre",
+        url: "#",
+        icon: LightbulbIcon,
+      },
+      {
+        title: "Tones",
+        url: "#",
+        icon: LightbulbIcon,
+      },
+    ],
   },
 ]
-  }]
     
 
