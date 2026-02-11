@@ -545,7 +545,7 @@ export function Clips() {
                           )}
                           <Link
                             to={getClipDetailPath(answer)}
-                            className="font-medium text-gray-900 hover:underline"
+                            className="font-medium text-primary hover:underline"
                           >
                             {answer.title ?? answer._id}
                           </Link>

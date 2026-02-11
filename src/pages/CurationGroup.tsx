@@ -159,7 +159,7 @@ export function CurationGroup() {
                     <td className="px-6 py-4 text-sm font-medium">
                       <button
                         type="button"
-                        className="text-blue-600 hover:underline text-left"
+                        className="cursor-pointer linkStyle text-left"
                         onClick={() => goToClipSuggestions(c._id)}
                       >
                         {c.name}

@@ -1057,8 +1057,8 @@ export function PlaylistDetail() {
                         className="h-12 w-12 rounded object-cover shrink-0"
                       />
                     )}
-                    <span className="text-sm font-medium text-gray-900 flex-1 truncate">
-                      {clip.title ?? "Untitled"}
+<span className="text-sm font-medium text-primary flex-1 truncate hover:underline">
+                        {clip.title ?? "Untitled"}
                     </span>
                     <span className="text-xs text-gray-500">{formatDate(clip.creationDate)}</span>
                   </Link>
