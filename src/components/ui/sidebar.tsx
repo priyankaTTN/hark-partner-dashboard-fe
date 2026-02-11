@@ -14,13 +14,15 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
   ({ collapsible = "none", className, children, ...props }, ref) => {
     const { isOpen } = useSidebar()
-    const width = collapsible === "icon" && !isOpen ? "w-16" : "w-64"
+    // Spec §3.3: sidebar 200px when open; minimized 50px
+    const width = collapsible === "icon" && !isOpen ? "w-[50px]" : "w-[200px]"
 
     return (
       <aside
         ref={ref}
         className={cn(
-          "flex min-h-screen flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-300",
+          "flex flex-col border-r bg-sidebar text-sidebar-foreground transition-all duration-300",
+          "fixed left-0 top-[55px] z-[1019] h-[calc(100vh-55px)]",
           width,
           className
         )}
@@ -177,15 +179,24 @@ const SidebarTrigger = React.forwardRef<
 })
 SidebarTrigger.displayName = "SidebarTrigger"
 
-// SidebarInset - main content area
+// SidebarInset - main content area (scrollable right section; spec §4.1)
 const SidebarInset = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <main
-      ref={ref}
-      className={cn("flex flex-1 flex-col min-h-screen overflow-visible", className)}
-      {...props}
-    />
-  )
+  ({ className, ...props }, ref) => {
+    const { isOpen } = useSidebar()
+    // Spec §3.3: margin-left so content is not hidden under fixed sidebar (200px / 50px minimized)
+    const marginLeft = isOpen ? "ml-[200px]" : "ml-[50px]"
+    return (
+      <main
+        ref={ref}
+        className={cn(
+          "flex flex-1 flex-col min-w-0 min-h-[calc(100vh-55px)] overflow-visible transition-[margin-left] duration-300",
+          marginLeft,
+          className
+        )}
+        {...props}
+      />
+    )
+  }
 )
 SidebarInset.displayName = "SidebarInset"
 

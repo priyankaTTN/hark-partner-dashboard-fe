@@ -65,7 +65,7 @@ export function Topic() {
   }, [data, currentPage])
 
   if (loading) {
-    return <LoadingState />
+    return <LoadingState message="Loading topics…" />
   }
 
   if (error) {

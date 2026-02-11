@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { BASE_URL } from "@/config/constant"
 import { createQuestion, deleteQuestion } from "@/lib/api"
 import useFetch from "@/customHook/useFetch"
@@ -631,7 +632,11 @@ export function Playlists() {
               questions.map((Q) => (
                 <tr key={Q._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 text-sm text-gray-600">{Q._id}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{Q.title}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <Link to={`/dashboard/playlists/${Q._id}`} className="text-primary hover:underline">
+                      {Q.title}
+                    </Link>
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{Q.answerCount}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{Q.hidden ? <span className="linkStyle">hidden</span> : ''}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{formatTags(Q.tags)}</td>

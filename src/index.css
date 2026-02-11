@@ -113,11 +113,17 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+/* Dashboard layout: fixed header (55px) + fixed sidebar (200px/50px); only .main scrolls with document */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground;
+    /* Allow document scroll for main content (DASHBOARD_LAYOUT_AND_SCROLL_DESIGN §5) */
+    overflow-y: auto;
   }
 }

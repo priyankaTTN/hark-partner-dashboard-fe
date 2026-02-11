@@ -195,14 +195,23 @@ Pages then only need to pass config and render the shared **Filter + Table + Pag
 - **ErrorState**: `message: string`. Use for API or validation errors so styling is consistent.
 - **Usage**: In list pages, render `<LoadingState />` or `<LoadingState overlay message="Loading …" />` when `loading`; render `<ErrorState message={String(error)} />` when `error`.
 
-### 3.4 PlaceholderPage (implemented)
+### 3.4 CreatableMultiSelect (implemented)
+
+**Path**: `@/components/CreatableMultiSelect.tsx`
+
+- **Library**: [react-select Creatable](https://react-select.com/creatable) — multi-select with “type to create” support.
+- **Props**: `options`, `value`, `onChangeIds`, `label?`, `placeholder?`, `disabled?`, `onCreateOption?`.
+- **Helpers**: `mapToCreatableOptions(list)` (list of `{ _id, name }` → options), `getSelectedOptions(options, ids)` (ids → selected option array).
+- **Usage**: Tags, Genres, Tones on Playlist Detail (QUESTION_DETAIL_COMPONENT_SPEC §7); reuse anywhere you need multi-select with creatable options.
+
+### 3.5 PlaceholderPage (implemented)
 
 **Path**: `@/components/PlaceholderPage.tsx`
 
 - **Props**: `title: string`, `message?: string` (default: `"Content coming soon..."`).
 - **Usage**: Use for routes that are not yet built (e.g. Clips, Produced Clips). Keeps layout and copy consistent.
 
-### 3.5 When designing new components — checklist
+### 3.6 When designing new components — checklist
 
 Before adding a **new** component or page:
 
@@ -213,7 +222,7 @@ Before adding a **new** component or page:
 5. **“Coming soon” pages** → Use `PlaceholderPage` with a `title` (and optional `message`). Do not duplicate placeholder layout.
 6. **Filters / tables** → Reuse the same layout and classes as in §1 (filter section, table alignment). If the same filter+table pattern repeats, consider extracting a shared `FilterBar` or `DataTable` (see below).
 
-### 3.6 Future / optional: FilterBar, DataTable, usePaginatedList
+### 3.7 Future / optional: FilterBar, DataTable, usePaginatedList
 
 These are **not** implemented yet; add them only if new pages repeat the same filter/table pattern and duplication grows.
 

@@ -65,7 +65,7 @@ export function Tone() {
   }, [data, currentPage])
 
   if (loading) {
-    return <LoadingState />
+    return <LoadingState message="Loading tones…" />
   }
 
   if (error) {

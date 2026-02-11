@@ -65,7 +65,7 @@ export function Genre() {
   }, [data, currentPage])
 
   if (loading) {
-    return <LoadingState />
+    return <LoadingState message="Loading genres…" />
   }
 
   if (error) {

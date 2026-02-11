@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react"
 
+function getAuthHeaders(): HeadersInit {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+  if (token) {
+    return { Authorization: `Bearer ${token}` }
+  }
+  return {}
+}
+
 type UseFetchOptions = {
   credentials?: RequestCredentials
 }
@@ -8,7 +16,7 @@ const useFetch = (url: string, options: UseFetchOptions = {}) => {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const { credentials } = options
+  const { credentials = "include" } = options
 
   useEffect(() => {
     // Reset loading and error states when URL changes
@@ -20,7 +28,11 @@ const useFetch = (url: string, options: UseFetchOptions = {}) => {
     
     fetch(url, {
       signal: abortController.signal,
-      ...(credentials !== undefined && { credentials }),
+      credentials,
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
     })
       .then((response) => {
         if (!response.ok) {

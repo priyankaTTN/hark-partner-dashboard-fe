@@ -8,7 +8,9 @@ import { Topic } from "@/pages/Topic"
 import { SuggestedClips } from "@/pages/SuggestedClips"
 import { ProducedClips } from "@/pages/ProducedClips"
 import { Clips } from "@/pages/Clips"
+import { ClipDetail } from "@/pages/ClipDetail"
 import { Playlists } from "@/pages/Playlists"
+import { PlaylistDetail } from "@/pages/PlaylistDetail"
 
 export function App() {
   return (
@@ -29,7 +31,9 @@ export function App() {
         <Route path="topic" element={<Topic />} />
         <Route path="genre" element={<Genre />} />
         <Route path="clips" element={<Clips />} />
+        <Route path="clips/:id" element={<ClipDetail />} />
         <Route path="playlists" element={<Playlists />} />
+        <Route path="playlists/:id" element={<PlaylistDetail />} />
       </Route>
       <Route path="/" element={<Navigate to="/dashboard/suggested-clips" replace />} />
       <Route path="*" element={<Navigate to="/dashboard/suggested-clips" replace />} />
