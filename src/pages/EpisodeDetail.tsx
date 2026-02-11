@@ -210,7 +210,7 @@ export function EpisodeDetail() {
                     </tr>
                   ) : (
                     filteredEpisodes.map((episode, index) => (
-                      <tr key={episode._id ?? `${episode.podcastSlug}-${episode.episodeSlug}` ?? `ep-${index}`} className="hover:bg-gray-50 transition-colors">
+                      <tr key={`ep-${index}`} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 text-sm font-medium">
                           <button
                             type="button"
