@@ -13,10 +13,14 @@ import {
 import { menuItems } from "@/config/menu-items"
 import { PlusIcon } from "@/components/icons"
 
-const getRouteFromTitle = (title: string): string => {
+const getRouteFromTitle = (title: string, childUrl?: string): string => {
+  if (childUrl && childUrl.startsWith("/")) return childUrl
   const titleMap: Record<string, string> = {
     "Suggested Clips": "/dashboard/suggested-clips",
-    "Produced Clips": "/dashboard/produced-clips",
+    "Curation Group": "/dashboard/curation-group",
+    "Episode Feed SXM": "/dashboard/feed-sxm",
+    "On Demand Episodes": "/dashboard/on-demand-episodes",
+    "Tracked Podcasts": "/dashboard/tracked-podcasts",
     "Playlists": "/dashboard/playlists",
     "Clips": "/dashboard/clips",
     "Topic": "/dashboard/topic",
@@ -26,9 +30,9 @@ const getRouteFromTitle = (title: string): string => {
   return titleMap[title] || "/dashboard/suggested-clips"
 }
 
-const isPageActive = (title: string, location: ReturnType<typeof useLocation>): boolean => {
-  const route = getRouteFromTitle(title)
-  return location.pathname === route
+const isPageActive = (title: string, location: ReturnType<typeof useLocation>, childUrl?: string): boolean => {
+  const route = getRouteFromTitle(title, childUrl)
+  return location.pathname === route || !!(childUrl && location.pathname.startsWith(childUrl))
 }
 
 export function AppSidebar() {
@@ -40,7 +44,7 @@ export function AppSidebar() {
     menuItems.forEach((item) => {
       if (item.children) {
         const hasActiveChild = item.children.some(
-          (child) => child.isActive || isPageActive(child.title, location)
+          (child) => child.isActive || isPageActive(child.title, location, child.url)
         )
         if (hasActiveChild) {
           expanded.add(item.title)
@@ -90,13 +94,13 @@ export function AppSidebar() {
                             })
                           }}
                         >
-                          <div className="flex items-center gap-3 w-full">
-                            <item.icon className="size-5 shrink-0" />
+                          <div className="flex  gap-3 w-full">
+                       
                             <span className="flex-1">{item.title}</span>
                             {item.action && (
                               <button
                                 type="button"
-                                className="size-4 shrink-0 flex items-center justify-center"
+                                className="size-4 shrink-0 flex  justify-center"
                                 onClick={(e: React.MouseEvent) => {
                                   e.stopPropagation()
                                   // Handle action click if needed
@@ -119,9 +123,9 @@ export function AppSidebar() {
                         >
                           <NavLink
                             to={getRouteFromTitle(item.title)}
-                            className="flex items-center gap-3 w-full"
+                            className="flex  gap-3 w-full"
                           >
-                            <item.icon className="size-5 shrink-0" />
+                     
                             <span className="flex-1">{item.title}</span>
                             {item.action && (
                               <item.action className="size-4 shrink-0 ml-auto" />
@@ -138,7 +142,7 @@ export function AppSidebar() {
                         >
                           <div className="pl-8 pt-1 space-y-1">
                             {item.children?.map((child) => {
-                              const isChildActive = child.isActive || isPageActive(child.title, location)
+                              const isChildActive = child.isActive || isPageActive(child.title, location, child.url)
                               return (
                                 <SidebarMenuButton
                                   key={child.title}
@@ -150,10 +154,10 @@ export function AppSidebar() {
                                   )}
                                 >
                                   <NavLink
-                                    to={getRouteFromTitle(child.title)}
-                                    className="flex items-center gap-3 w-full"
+                                    to={getRouteFromTitle(child.title, child.url)}
+                                    className="flex  gap-3 w-full"
                                   >
-                                    <child.icon className="size-4 shrink-0" />
+                                   
                                     <span className="flex-1 text-sm">{child.title}</span>
                                   </NavLink>
                                 </SidebarMenuButton>

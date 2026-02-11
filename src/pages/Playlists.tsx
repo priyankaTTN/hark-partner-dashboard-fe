@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { BASE_URL } from "@/config/constant"
 import { createQuestion, deleteQuestion } from "@/lib/api"
 import useFetch from "@/customHook/useFetch"
@@ -13,16 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationPrevious,
-  PaginationNext,
-  PaginationEllipsis,
-} from "@/components/ui/pagination"
-import { Spinner } from "@/components/ui/spinner"
+import { formatDate } from "@/lib/utils"
+import { TablePagination } from "@/components/TablePagination"
+import { LoadingState } from "@/components/LoadingState"
+import { ErrorState } from "@/components/ErrorState"
 
 const PAGE_SIZE = 20
 
@@ -49,27 +44,6 @@ function formatTags(tags: TagItem[] | undefined): string {
 type PlaylistApiResponse = {
   totalQuestions: number
   questions: PlaylistItem[]
-}
-
-function formatDate(value: string | number | undefined): string {
-  if (value == null) return "—"
-  const date = typeof value === "number" ? new Date(value) : new Date(value)
-  return isNaN(date.getTime()) ? "—" : date.toLocaleDateString()
-}
-
-function getVisiblePageNumbers(currentPage: number, totalPages: number): (number | "ellipsis")[] {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1)
-  }
-  const pages: (number | "ellipsis")[] = []
-  if (currentPage <= 3) {
-    pages.push(1, 2, 3, 4, "ellipsis", totalPages)
-  } else if (currentPage >= totalPages - 2) {
-    pages.push(1, "ellipsis", totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
-  } else {
-    pages.push(1, "ellipsis", currentPage - 1, currentPage, currentPage + 1, "ellipsis", totalPages)
-  }
-  return pages
 }
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -224,7 +198,7 @@ export function Playlists() {
     credentials: "include",
   })
 
-  const { questions, totalPages } = useMemo(() => {
+  const { questions, totalPages, startIndex, endIndex, totalQuestions } = useMemo(() => {
     const response = data as PlaylistApiResponse | null
     const total = response?.totalQuestions ?? 0
     const list = response?.questions ?? []
@@ -240,8 +214,6 @@ export function Playlists() {
       endIndex,
     }
   }, [data, currentPage])
-
-  const pageNumbers = getVisiblePageNumbers(currentPage, totalPages)
 
   return (
       <div className="flex flex-col pb-6">
@@ -616,20 +588,11 @@ export function Playlists() {
       </div>
     )}
 
-    {error && (
-      <div className="mt-4 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-        {String(error)}
-      </div>
-    )}
+    {error && <ErrorState message={String(error)} />}
 
     <div className="relative mt-4">
       {loading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg border border-gray-200 bg-white/80">
-          <div className="flex flex-col items-center gap-3">
-            <Spinner className="size-8 text-primary" />
-            <span className="text-sm font-medium text-gray-700">Loading playlists…</span>
-          </div>
-        </div>
+        <LoadingState overlay message="Loading playlists…" />
       )}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
         <table className="w-full table-auto">
@@ -669,7 +632,11 @@ export function Playlists() {
               questions.map((Q) => (
                 <tr key={Q._id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 text-sm text-gray-600">{Q._id}</td>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{Q.title}</td>
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <Link to={`/dashboard/playlists/${Q._id}`} className="text-primary hover:underline">
+                      {Q.title}
+                    </Link>
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{Q.answerCount}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{Q.hidden ? <span className="linkStyle">hidden</span> : ''}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">{formatTags(Q.tags)}</td>
@@ -691,63 +658,15 @@ export function Playlists() {
       </div>
     </div>
 
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-1">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (currentPage > 1) setCurrentPage((p) => p - 1)
-                }}
-                className={
-                  currentPage <= 1
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
-                }
-                aria-disabled={currentPage <= 1}
-              />
-            </PaginationItem>
-            {pageNumbers.map((page, i) =>
-              page === "ellipsis" ? (
-                <PaginationItem key={`ellipsis-${i}`}>
-                  <PaginationEllipsis />
-                </PaginationItem>
-              ) : (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setCurrentPage(page)
-                    }}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              )
-            )}
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault()
-                  if (currentPage < totalPages) setCurrentPage((p) => p + 1)
-                }}
-                className={
-                  currentPage >= totalPages
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
-                }
-                aria-disabled={currentPage >= totalPages}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+    <TablePagination
+      currentPage={currentPage}
+      totalPages={totalPages}
+      onPageChange={setCurrentPage}
+      startIndex={startIndex}
+      endIndex={endIndex}
+      total={totalQuestions}
+      itemLabel="playlists"
+    />
     </div>
   )
 }

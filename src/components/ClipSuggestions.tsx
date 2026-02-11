@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Spinner } from "@/components/ui/spinner"
 import useDebounce from "@/customHook/useDebounce"
+import { LoadingState } from "@/components/LoadingState"
 import useFetch from "@/customHook/useFetch"
 interface Clip {
   title: string
@@ -842,12 +842,7 @@ export function ClipSuggestions() {
       {/* Table Section */}
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4 relative">
         {isLoading && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-10">
-            <div className="flex flex-col items-center gap-3">
-              <Spinner className="size-8 text-gray-600" />
-              <p className="text-sm text-gray-600 font-medium">Loading clips...</p>
-            </div>
-          </div>
+          <LoadingState overlay message="Loading clips…" />
         )}
         <table className="w-full table-auto">
           <thead className="bg-gray-100 border-b border-gray-200">
