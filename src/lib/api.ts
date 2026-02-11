@@ -495,6 +495,40 @@ export const updateVoiceHarkClip = (id: string | number, body: { voiceHark: bool
     credentials: "include",
   })
 
+/** GET /api/v0/voicehark/clips — Daily Clips list by category (DAILY_CLIP_SPEC §3–§4) */
+export type VoiceHarkClipsResponse = Record<string, AnswerListItem[]>
+
+export function getVoiceHarkClipsUrl(params?: { from?: number; limit?: number; sort?: string; status?: string; userId?: string }): string {
+  const search = new URLSearchParams()
+  if (params?.from != null) search.set("from", String(params.from))
+  if (params?.limit != null) search.set("limit", String(params.limit))
+  if (params?.sort) search.set("sort", params.sort)
+  if (params?.status) search.set("status", params.status)
+  if (params?.userId) search.set("userId", params.userId)
+  const qs = search.toString()
+  return `${DASHBOARD_BASE_URL}/api/v0/voicehark/clips${qs ? `?${qs}` : ""}`
+}
+
+export const fetchVoiceHarkClips = (options?: Parameters<typeof getVoiceHarkClipsUrl>[0]) =>
+  fetchAPI<VoiceHarkClipsResponse>(getVoiceHarkClipsUrl(options).replace(DASHBOARD_BASE_URL, ""))
+
+/** POST /api/v0/voicehark/clips/reorder — reorder clips within category (DAILY_CLIP_SPEC §4) */
+export const reorderVoiceHarkClips = (clipIds: string[]) =>
+  fetchAPI<unknown>("/api/v0/voicehark/clips/reorder", {
+    method: "POST",
+    body: { clipIds } as Record<string, unknown>,
+    credentials: "include",
+  })
+
+/** GET /api/v0/answers/getHarkVoiceCategories — fetch categories for Move dropdown (DAILY_CLIP_SPEC §4) */
+export type HarkVoiceCategory = { _id: string; title?: string; name?: string; [key: string]: unknown }
+
+export const fetchHarkVoiceCategories = () =>
+  fetchAPI<HarkVoiceCategory[] | { data?: HarkVoiceCategory[] }>(getHarkVoiceCategoriesUrl().replace(DASHBOARD_BASE_URL, "")).then((r) => {
+    const list = Array.isArray(r) ? r : (r as { data?: HarkVoiceCategory[] })?.data ?? []
+    return list
+  })
+
 /** GET /api/v0/dashboard/search-podcast?q=&from=&limit= (ANSWER_LIST supporting) */
 export function getSearchPodcastUrl(q: string, from = 0, limit = 20): string {
   const params = new URLSearchParams({ q: q || "", from: String(from), limit: String(limit) })

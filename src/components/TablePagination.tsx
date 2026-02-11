@@ -33,11 +33,6 @@ export function TablePagination({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 px-1">
-      {(startIndex != null && endIndex != null && total != null && (
-        <p className="text-sm text-gray-600">
-          Showing {startIndex}–{endIndex} of {total} {itemLabel}
-        </p>
-      )) || <div />}
       <Pagination>
         <PaginationContent>
           <PaginationItem>

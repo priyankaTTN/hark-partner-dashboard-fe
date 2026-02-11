@@ -15,6 +15,7 @@ import { EpisodeFeedSXM } from "@/pages/EpisodeFeedSXM"
 import { OnDemandEpisodes } from "@/pages/OnDemandEpisodes"
 import { TrackedPodcasts } from "@/pages/TrackedPodcasts"
 import { EpisodeDetail } from "@/pages/EpisodeDetail"
+import { DailyClips } from "@/pages/DailyClips"
 
 export function App() {
   return (
@@ -42,6 +43,7 @@ export function App() {
         <Route path="on-demand-episodes" element={<Navigate to="/dashboard/on-demand-episodes/page/1" replace />} />
         <Route path="on-demand-episodes/page/:pageIndex" element={<OnDemandEpisodes />} />
         <Route path="tracked-podcasts" element={<TrackedPodcasts />} />
+        <Route path="daily-clips" element={<DailyClips />} />
         <Route path="episodes/details/:id" element={<EpisodeDetail />} />
       </Route>
       <Route path="/" element={<Navigate to="/dashboard/suggested-clips" replace />} />

@@ -5,11 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Format a date value (string or number) for display; returns "—" if invalid or null. */
-export function formatDate(value: string | number | undefined): string {
+/** Format a date value (string or number) for display; returns "—" if invalid or null. Set includeTime true for date + time. */
+export function formatDate(value: string | number | undefined, includeTime?: boolean): string {
   if (value == null) return "—"
   const date = typeof value === "number" ? new Date(value) : new Date(value)
-  return isNaN(date.getTime()) ? "—" : date.toLocaleDateString()
+  if (isNaN(date.getTime())) return "—"
+  return includeTime ? date.toLocaleString() : date.toLocaleDateString()
 }
 
 /** Format duration in seconds to "M:SS" or "H:MM:SS". */

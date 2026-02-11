@@ -65,6 +65,18 @@ export const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: "Programming",
+    url: "#",
+    icon: RadioIcon,
+    children: [
+      {
+        title: "Daily Clips",
+        url: "/dashboard/daily-clips",
+        icon: RadioIcon,
+      },
+    ],
+  },
+  {
     title: "Taxonomy",
     url: "#",
     icon: LightbulbIcon,

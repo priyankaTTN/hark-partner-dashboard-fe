@@ -6,3 +6,5 @@ export const DASHBOARD_BASE_URL = "https://dashboard.harkaudio.com"
 export const WEB_URL = "https://www.harkaudio.com"
 /** CDN base for question card images — QUESTION_DETAIL_COMPONENT_SPEC_DETAIL §2 */
 export const IMAGE_PATH = "https://s3.us-east-2.amazonaws.com/hark-audio-prod"
+/** Stage/S3 base for Daily Clips S3 badge when audioUrl starts with this (DAILY_CLIP_SPEC §6.4) */
+export const STAGE_URL = "https://s3."

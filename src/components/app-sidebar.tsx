@@ -23,6 +23,7 @@ const getRouteFromTitle = (title: string, childUrl?: string): string => {
     "Tracked Podcasts": "/dashboard/tracked-podcasts",
     "Playlists": "/dashboard/playlists",
     "Clips": "/dashboard/clips",
+    "Daily Clips": "/dashboard/daily-clips",
     "Topic": "/dashboard/topic",
     "Genre": "/dashboard/genre",
     "Tones": "/dashboard/tone",
