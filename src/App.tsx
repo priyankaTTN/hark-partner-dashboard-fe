@@ -1,5 +1,5 @@
-import { Routes, Route } from "react-router-dom"
-// import { ProtectedRoute } from "@/components/ProtectedRoute"
+import { Routes, Route, Navigate } from "react-router-dom"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { Login } from "@/pages/Login"
 import { Dashboard } from "@/pages/Dashboard"
 import { Tone } from "@/pages/Tone"
@@ -22,14 +22,13 @@ export function App() {
       <Route path="/login" element={<Login />} />
       <Route
         path="/dashboard"
-        element={<Dashboard />}
-        // element={
-        //   <ProtectedRoute>
-        //     <Dashboard />
-        //   </ProtectedRoute>
-        // }
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
       >
-        {/* <Route index element={<Navigate to="/dashboard/suggested-clips" replace />} /> */}
+        <Route index element={<Navigate to="/dashboard/suggested-clips" replace />} />
         <Route path="suggested-clips" element={<SuggestedClips />} />
         <Route path="tone" element={<Tone />} />
         <Route path="topic" element={<Topic />} />
@@ -45,8 +44,8 @@ export function App() {
         <Route path="tracked-podcasts" element={<TrackedPodcasts />} />
         <Route path="episodes/details/:id" element={<EpisodeDetail />} />
       </Route>
-      {/* <Route path="/" element={<Navigate to="/dashboard/suggested-clips" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard/suggested-clips" replace />} /> */}
+      <Route path="/" element={<Navigate to="/dashboard/suggested-clips" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard/suggested-clips" replace />} />
     </Routes>
   )
 }
