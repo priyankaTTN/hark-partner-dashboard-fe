@@ -107,7 +107,7 @@ export function ClipDetail() {
   }, [tonesData])
 
   const relatedResponse = relatedData as QuestionAnswersResponse | { data?: QuestionAnswersResponse } | null
-  const raw = relatedResponse && "data" in relatedResponse ? relatedResponse.data : relatedResponse
+  const raw = (relatedResponse && "data" in relatedResponse ? relatedResponse.data : relatedResponse) as QuestionAnswersResponse | undefined
   const relatedClips: AnswerClip[] = raw?.answers ?? []
 
   const tagOptions = useMemo(() => mapToCreatableOptions(tagsList), [tagsList])

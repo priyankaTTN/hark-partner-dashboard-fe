@@ -512,3 +512,265 @@ export function getDashboardMembersUrl(qs: string, limit = 50): string {
   const params = new URLSearchParams({ qs: qs || "", limit: String(limit) })
   return `${DASHBOARD_BASE_URL}/api/v0/dashboard/dashboard-members/?${params.toString()}`
 }
+
+// --- Curation Groups (CURATION_GROUPS_SPEC) ---
+export type CurationGroupItem = { _id: string; name: string; [key: string]: unknown }
+
+/** GET /api/v0/dashboard/curationGroups/all */
+export function getCurationGroupsAllUrl(qs?: string): string {
+  const params = qs ? `?qs=${encodeURIComponent(qs)}` : ""
+  return `${DASHBOARD_BASE_URL}/api/v0/dashboard/curationGroups/all${params}`
+}
+
+export const fetchAllCurationGroups = (options?: { qs?: string }): Promise<CurationGroupItem[]> =>
+  fetchAPI<CurationGroupItem[] | { data?: CurationGroupItem[] }>(
+    `/api/v0/dashboard/curationGroups/all${options?.qs ? `?qs=${encodeURIComponent(options.qs)}` : ""}`
+  ).then((r) => (Array.isArray(r) ? r : (r as { data?: CurationGroupItem[] })?.data ?? []))
+
+export const addCurationGroup = (curationGroupName: string) =>
+  fetchAPI<unknown>("/api/v0/dashboard/curationGroups/create", {
+    method: "POST",
+    body: { curationGroupName },
+    credentials: "include",
+  })
+
+export const editCurationGroup = (id: string, curationGroupName: string) =>
+  fetchAPI<unknown>("/api/v0/dashboard/curationGroups/edit", {
+    method: "POST",
+    body: { id, curationGroupName },
+    credentials: "include",
+  })
+
+export const deleteCurationGroup = (curationGroupId: string) =>
+  fetchAPI<unknown>("/api/v0/dashboard/curationGroups/delete", {
+    method: "DELETE",
+    body: { curationGroupId },
+    credentials: "include",
+  })
+
+export const attachCurationGroupsToPodcast = (payload: { podcastId: string; curationGroupIds: string[] }) =>
+  fetchAPI<unknown>("/api/v0/dashboard/podcast/assign-curation-group", {
+    method: "POST",
+    body: payload,
+    credentials: "include",
+  })
+
+// --- Transcript / Tracked Podcasts (TRACKED_PODCASTS_SPEC) ---
+export type TrackedPodcastItem = {
+  _id: string
+  title?: string
+  aiClipSuggestionCategory?: string
+  curationGroups?: Array<{ _id: string; name: string } | string>
+  [key: string]: unknown
+}
+
+/** GET /api/v0/transcript/podcast/list */
+export function getPodcastTranscriptListUrl(curationGroupId?: string): string {
+  const params = new URLSearchParams()
+  if (curationGroupId) params.set("curationGroupId", curationGroupId)
+  return `${DASHBOARD_BASE_URL}/api/v0/transcript/podcast/list?${params.toString()}`
+}
+
+export const getPodcastTranscript = (params?: { curationGroupId?: string }) =>
+  fetchAPI<{ transcriptList?: TrackedPodcastItem[] }>(
+    `/api/v0/transcript/podcast/list${params?.curationGroupId ? `?curationGroupId=${encodeURIComponent(params.curationGroupId)}` : ""}`
+  ).then((r) => ({
+    transcriptList: Array.isArray((r as { transcriptList?: TrackedPodcastItem[] }) ?? [])
+      ? (r as { transcriptList: TrackedPodcastItem[] }) ?? []
+      : [] as TrackedPodcastItem[],
+  }))
+
+export const addPodcastTranscript = (payload: {
+  podcastId?: string
+  podcastSlug?: string
+  podcastType?: "internal" | "external"
+  aiClipSuggestionCategory?: string
+}) =>
+  fetchAPI<unknown>("/api/v0/transcript/podcast", {
+    method: "POST",
+    body: payload,
+    credentials: "include",
+  })
+
+export const deletePodcastTranscript = (podcastId: string) =>
+  fetchAPI<unknown>("/api/v0/transcript/podcast", {
+    method: "DELETE",
+    body: { podcastId },
+    credentials: "include",
+  })
+
+export const editPodcastTranscriptPromptCategory = (podcastId: string, aiClipSuggestionCategory: string) =>
+  fetchAPI<unknown>("/api/v0/dashboard/aiClipSuggestionCategories/edit", {
+    method: "POST",
+    body: { podcastId, aiClipSuggestionCategory },
+    credentials: "include",
+  })
+
+/** GET /api/v0/dashboard/clip/suggestion/aiClipSuggestionCategories */
+export const getCategoryClipSuggestionsData = () =>
+  fetchAPI<Array<{ _id: string; name: string; [key: string]: unknown }>>(
+    "/api/v0/dashboard/clip/suggestion/aiClipSuggestionCategories"
+  ).then((r) => (Array.isArray(r) ? r : []))
+
+// --- Episode Detail (EPISODE_DETAIL_COMPONENT_SPEC) ---
+/** GET /api/v0/podcasts/:id — podcast metadata including href for RSS */
+export type PodcastDetailResponse = { _id?: string; href?: string; title?: string; [key: string]: unknown }
+export const fetchPodcastDetail = (id: string) =>
+  fetchAPI<PodcastDetailResponse>(`/api/v0/podcasts/${encodeURIComponent(id)}`)
+
+/** GET /api/v0/external/parse-podcast-rss?url= — parse RSS and return episodes */
+export type EpisodeDetailItem = {
+  _id?: string
+  name?: string
+  title?: string
+  description?: string
+  artistName?: string
+  podcastSlug?: string
+  episodeSlug?: string
+  s3audioUrl?: string
+  createdAt?: string | number
+  pubDate?: string | number
+  [key: string]: unknown
+}
+export type PodcastEpisodesResponse = { title?: string; podcasts?: EpisodeDetailItem[] }
+export const getPodcastEpisodesFromRss = (href: string) =>
+  fetchAPI<PodcastEpisodesResponse>(
+    `/api/v0/external/parse-podcast-rss?url=${encodeURIComponent(href)}`
+  ).then((r) => {
+    const data = r as { data?: PodcastEpisodesResponse } & PodcastEpisodesResponse
+    const payload = data?.data ?? data
+    return {
+      title: payload?.title ?? "",
+      podcasts: Array.isArray(payload?.podcasts) ? payload.podcasts : [],
+    }
+  })
+
+/** POST /api/v0/external/uploadMultipleEpisodeManually — download episodes to S3 */
+export const downloadEpisodesToS3 = (payload: { ids?: EpisodeDetailItem[] }) =>
+  fetchAPI<unknown>("/api/v0/external/uploadMultipleEpisodeManually", {
+    method: "POST",
+    body: payload as unknown as Record<string, unknown>,
+    credentials: "include",
+  })
+
+// --- Episode Feed SXM (EPISODE_FEED_SXM_SPEC) ---
+export type SxmEpisodeItem = {
+  podcastSlug?: string
+  episodeSlug?: string
+  name?: string
+  description?: string
+  podcast_name?: string
+  duration?: number
+  generateTranscriptStatus?: string
+  pubDate?: string | number
+  creationDate?: string | number
+  [key: string]: unknown
+}
+
+/** GET /api/v0/sxm/latestEpisode */
+export function getSxmLatestEpisodeUrl(options: {
+  qs?: string
+  podcastqs?: string
+  daysOffset?: number
+  offset?: number
+  curationGroupId?: string
+}): string {
+  const params = new URLSearchParams()
+  if (options.qs) params.set("qs", options.qs)
+  if (options.podcastqs) params.set("podcastqs", options.podcastqs)
+  if (options.curationGroupId) params.set("curationGroupId", options.curationGroupId)
+  const offset = options.daysOffset ?? options.offset
+  if (offset != null) params.set("daysOffset", String(offset))
+  if (offset != null) params.set("offset", String(offset))
+  return `${DASHBOARD_BASE_URL}/api/v0/sxm/latestEpisode?${params.toString()}`
+}
+
+export const getSxmLatestPodcast = (options: Parameters<typeof getSxmLatestEpisodeUrl>[0]) => {
+  const path = getSxmLatestEpisodeUrl(options).replace(DASHBOARD_BASE_URL, "")
+  return fetchAPI<{ episodes?: SxmEpisodeItem[]; dateInfo?: { nextOffset?: number; hasMore?: boolean }; data?: { episodes?: SxmEpisodeItem[]; dateInfo?: { nextOffset?: number; hasMore?: boolean } } }>(path).then((res) => {
+    const data = (res as { data?: unknown })?.data ?? res
+    const episodes = (data as { episodes?: SxmEpisodeItem[] }).episodes ?? []
+    const dateInfo = (data as { dateInfo?: { nextOffset?: number; hasMore?: boolean } }).dateInfo
+    return {
+      episodes: Array.isArray(episodes) ? episodes : [],
+      nextOffset: dateInfo?.nextOffset,
+      hasMore: dateInfo?.hasMore ?? false,
+    }
+  })
+}
+
+/** POST /api/v0/sxm/episodeDetails */
+export const getSxmEpisodeDetails = (podcastSlug: string, episodeSlug: string) =>
+  fetchAPI<unknown>("/api/v0/sxm/episodeDetails", {
+    method: "POST",
+    body: { podcastSlug, episodeSlug },
+    credentials: "include",
+  })
+
+// --- On Demand Episodes (ON_DEMAND_EPISODES_SPEC) ---
+export type OnDemandEpisodeItem = {
+  _id: string
+  name?: string
+  description?: string
+  podcast_name?: string
+  duration?: number
+  image?: string
+  transcriptRequestDateTime?: string | number
+  transcriptRequestedBy?: string
+  generateTranscriptStatus?: string
+  podcastSlug?: string
+  episodeSlug?: string
+  [key: string]: unknown
+}
+
+/** GET /api/v0/transcript/episode/list */
+export function getEpisodeTranscriptListUrl(params: {
+  page: number
+  limit: number
+  qs?: string
+  podcastqs?: string
+  userNameqs?: string
+}): string {
+  const search = new URLSearchParams({
+    page: String(params.page),
+    limit: String(params.limit),
+  })
+  if (params.qs) search.set("qs", params.qs)
+  if (params.podcastqs) search.set("podcastqs", params.podcastqs)
+  if (params.userNameqs) search.set("userNameqs", params.userNameqs)
+  return `${DASHBOARD_BASE_URL}/api/v0/transcript/episode/list?${search.toString()}`
+}
+
+export type EpisodeTranscriptListResponse = {
+  data?: { data?: OnDemandEpisodeItem[]; pagination?: { total?: number; totalPages?: number } }
+}
+
+export const getEpisodeTranscriptList = (page: number, limit: number, options?: { qs?: string; podcastqs?: string; userNameqs?: string }) => {
+  const path = getEpisodeTranscriptListUrl({ page, limit, ...options }).replace(DASHBOARD_BASE_URL, "")
+  return fetchAPI<EpisodeTranscriptListResponse>(path).then((r) => {
+    const data = (r as EpisodeTranscriptListResponse).data
+    const list = data ?? []
+    const pagination = data?.pagination ?? {}
+    return {
+      episodeList: Array.isArray(list) ? list : [],
+      totalItems: pagination.total ?? 0,
+      totalPages: pagination.totalPages ?? 1,
+    }
+  })
+}
+
+/** POST /api/v0/transcript/episode — request transcript */
+export const requestEpisodeTranscript = (episode: Record<string, unknown>, regenerateTranscript?: boolean) =>
+  fetchAPI<unknown>("/api/v0/transcript/episode", {
+    method: "POST",
+    body: { episode, regenerateTranscript },
+    credentials: "include",
+  })
+
+/** DELETE /api/v0/transcript/episode */
+export const deleteEpisodeTranscript = (id: string) =>
+  fetchAPI<unknown>("/api/v0/transcript/episode", {
+    method: "DELETE",
+    body: { _id: id },
+    credentials: "include",
+  })

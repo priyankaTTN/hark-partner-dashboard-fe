@@ -2,6 +2,8 @@
 
 This document describes the **design component structure** (filters, pagination, table alignment), **implemented shared components and utilities**, **custom hooks** (search + fetch API), and guidelines so **new components follow the same patterns** and avoid repeated code.
 
+**Layout context:** All design components below live inside the **scrollable main content area** of the dashboard. For the overall layout (fixed header 55px, fixed sidebar 200px/50px, scrollable right section, container-fluid padding), see **DASHBOARD_LAYOUT_AND_SCROLL_DESIGN.md**. Tables and cards are placed in `main` and scroll with the page; only the right column scrolls.
+
 ---
 
 ## 0. Implemented shared components & utilities (use these first)
@@ -23,7 +25,9 @@ When building or designing **new** components, **always prefer these** instead o
 
 ## 1. Current Design Component Structure
 
-### 1.1 Page layout (shared across Genre, Topic, Tone)
+All of the following (filters, tables, cards, pagination) sit inside the **main content area** (`.main` / `SidebarInset`) with **container-fluid** padding (30px horizontal). They scroll with the page; header and sidebar stay fixed. See DASHBOARD_LAYOUT_AND_SCROLL_DESIGN.md §4–§7.
+
+### 1.1 Content layout within main (shared across Genre, Topic, Tone, Clips, Playlists)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -43,6 +47,8 @@ When building or designing **new** components, **always prefer these** instead o
 └─────────────────────────────────────────────────────────────┘
 ```
 
+- **Placement:** This stack lives in `main` → container fluid (padding 0 30px) → route component. Tables and cards are in flow; the **page** scrolls vertically (no fixed height + overflow on `.main`). See DASHBOARD_LAYOUT_AND_SCROLL_DESIGN.md §5–§6.
+
 ### 1.2 Filter section
 
 - **Container**: `bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4`
@@ -51,6 +57,8 @@ When building or designing **new** components, **always prefer these** instead o
 - **Alignment**: `flex flex-col sm:flex-row sm:items-center gap-3` for responsive filter row
 
 ### 1.3 Table alignment & styling
+
+Tables live inside the scrollable main area (DASHBOARD_LAYOUT_AND_SCROLL_DESIGN.md §6). They scroll with the page; use a wrapper with `overflow-x: auto` for wide tables so the table can scroll horizontally within its container while the page scrolls vertically.
 
 | Element   | Classes / alignment |
 |----------|----------------------|
@@ -64,7 +72,7 @@ When building or designing **new** components, **always prefer these** instead o
 | Row hover | `hover:bg-gray-50 transition-colors` |
 | Empty state | `colSpan={3} px-6 py-8 text-center text-gray-500` |
 
-All list tables use **left-aligned** columns and consistent cell padding.
+All list tables use **left-aligned** columns and consistent cell padding. Do not give the table container a fixed height that creates a second vertical scroll unless required; prefer page scroll (layout doc §6.3).
 
 ### 1.4 Pagination structure
 
@@ -191,9 +199,9 @@ Pages then only need to pass config and render the shared **Filter + Table + Pag
 
 **Paths**: `@/components/LoadingState.tsx`, `@/components/ErrorState.tsx`
 
-- **LoadingState**: `message?: string`, `overlay?: boolean`. Use `overlay` for table-level loading (spinner over content); omit for full-page loading.
+- **LoadingState**: `message?: string`, `overlay?: boolean`. Use `overlay` for table-level loading (spinner over content); omit for full-page loading. Use contextual messages (e.g. "Loading clips…", "Loading playlists…") for list pages.
 - **ErrorState**: `message: string`. Use for API or validation errors so styling is consistent.
-- **Usage**: In list pages, render `<LoadingState />` or `<LoadingState overlay message="Loading …" />` when `loading`; render `<ErrorState message={String(error)} />` when `error`.
+- **Usage**: In list pages, render `<LoadingState message="Loading …" />` or `<LoadingState overlay message="Loading …" />` when `loading`; render `<ErrorState message={String(error)} />` when `error`. Ensures a loader is shown while APIs are in progress (layout unchanged; only main content area shows loading).
 
 ### 3.4 CreatableMultiSelect (implemented)
 
@@ -209,18 +217,19 @@ Pages then only need to pass config and render the shared **Filter + Table + Pag
 **Path**: `@/components/PlaceholderPage.tsx`
 
 - **Props**: `title: string`, `message?: string` (default: `"Content coming soon..."`).
-- **Usage**: Use for routes that are not yet built (e.g. Clips, Produced Clips). Keeps layout and copy consistent.
+- **Usage**: Use for routes that are not yet built (e.g. Produced Clips). Renders inside the scrollable main area; keeps layout and copy consistent.
 
 ### 3.6 When designing new components — checklist
 
 Before adding a **new** component or page:
 
-1. **Dates** → Use `formatDate` from `@/lib/utils`. Do not add a new date formatter.
-2. **Pagination** → Use `TablePagination` with `currentPage`, `totalPages`, `onPageChange`, and optional summary props. Do not copy pagination markup or `getVisiblePageNumbers` into the page.
-3. **Loading** → Use `LoadingState` (full area or `overlay`). Do not add new spinner/loading markup.
-4. **Errors** → Use `ErrorState` for error messages. Do not add new error box markup.
-5. **“Coming soon” pages** → Use `PlaceholderPage` with a `title` (and optional `message`). Do not duplicate placeholder layout.
-6. **Filters / tables** → Reuse the same layout and classes as in §1 (filter section, table alignment). If the same filter+table pattern repeats, consider extracting a shared `FilterBar` or `DataTable` (see below).
+1. **Layout** → New pages render inside the scrollable **main** area (Dashboard → SidebarInset → container fluid). Do not break the fixed header/sidebar + scrollable main pattern; see DASHBOARD_LAYOUT_AND_SCROLL_DESIGN.md.
+2. **Dates** → Use `formatDate` from `@/lib/utils`. Do not add a new date formatter.
+3. **Pagination** → Use `TablePagination` with `currentPage`, `totalPages`, `onPageChange`, and optional summary props. Do not copy pagination markup or `getVisiblePageNumbers` into the page.
+4. **Loading** → Use `LoadingState` (full area or `overlay`) with a clear message. Do not add new spinner/loading markup.
+5. **Errors** → Use `ErrorState` for error messages. Do not add new error box markup.
+6. **“Coming soon” pages** → Use `PlaceholderPage` with a `title` (and optional `message`). Do not duplicate placeholder layout.
+7. **Filters / tables / cards** → Reuse the same layout and classes as in §1 (filter section, table alignment). Tables and cards scroll with the page; use horizontal scroll on table wrapper for wide tables. Optional inner scroll on cards only when spec requires it (layout doc §6–§7).
 
 ### 3.7 Future / optional: FilterBar, DataTable, usePaginatedList
 
@@ -236,12 +245,14 @@ These are **not** implemented yet; add them only if new pages repeat the same fi
 
 | Area | Status | Where / What to use |
 |------|--------|---------------------|
+| **Layout** | See layout doc | DASHBOARD_LAYOUT_AND_SCROLL_DESIGN.md — fixed header (55px), fixed sidebar (200px/50px), scrollable main; all design components live in main. |
 | **Utils** | ✅ Implemented | `formatDate`, `getVisiblePageNumbers` in `@/lib/utils` — use these everywhere; do not copy. |
 | **Pagination** | ✅ Implemented | `TablePagination` in `@/components/TablePagination` — use on all list/table pages. |
-| **Loading / Error** | ✅ Implemented | `LoadingState`, `ErrorState` in `@/components` — use instead of custom spinner/error UI. |
+| **Loading / Error** | ✅ Implemented | `LoadingState`, `ErrorState` in `@/components` — use for all list/API loading; contextual messages. |
 | **Placeholder pages** | ✅ Implemented | `PlaceholderPage` in `@/components/PlaceholderPage` — use for “coming soon” routes. |
 | **Filter** | Same layout per page | Reuse layout/classes from §1.2; optional future: `FilterBar` component. |
-| **Table** | Same markup per page | Reuse table alignment from §1.3; optional future: `DataTable` component. |
+| **Table** | Same markup per page | Reuse table alignment from §1.3; in-flow, page scroll; horizontal scroll on wrapper if wide (layout doc §6). |
+| **Cards** | In main | Scroll with page; inner scroll only when spec requires (layout doc §7). |
 | **Search + API** | Per-page with hooks | `useDebounce` + `useFetch` + local state; optional future: `usePaginatedList` hook. |
 
-When designing **new** components or pages: start from **§0** and the **§3.5 checklist** so design stays consistent and repeated code is avoided.
+When designing **new** components or pages: start from **§0**, the **layout doc** (DASHBOARD_LAYOUT_AND_SCROLL_DESIGN.md), and the **§3.6 checklist** so design stays consistent and repeated code is avoided.

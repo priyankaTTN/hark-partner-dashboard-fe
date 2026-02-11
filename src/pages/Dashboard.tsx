@@ -28,7 +28,7 @@ export function Dashboard() {
         <AppSidebar />
         <SidebarInset>
           {/* Main content: only this area scrolls with the page (spec §4.1); container-fluid padding 30px (§4.1) */}
-          <div className="flex-1 min-w-0 px-[30px] py-4">
+          <div className="flex-1 min-w-0 px-[20px] py-4">
             <Outlet />
           </div>
         </SidebarInset>

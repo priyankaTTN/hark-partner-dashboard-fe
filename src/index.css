@@ -113,6 +113,11 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
+/* Link style for table links (TRACKED_PODCASTS_SPEC §6.3) */
+.linkStyle {
+  @apply text-primary hover:underline cursor-pointer;
+}
+
 /* Dashboard layout: fixed header (55px) + fixed sidebar (200px/50px); only .main scrolls with document */
 @layer base {
   * {

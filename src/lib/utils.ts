@@ -12,6 +12,18 @@ export function formatDate(value: string | number | undefined): string {
   return isNaN(date.getTime()) ? "—" : date.toLocaleDateString()
 }
 
+/** Format duration in seconds to "M:SS" or "H:MM:SS". */
+export function formatTime(seconds: number | undefined | null): string {
+  if (seconds == null || Number.isNaN(Number(seconds))) return "—"
+  const s = Math.floor(Number(seconds))
+  if (s < 0) return "—"
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+  return `${m}:${String(sec).padStart(2, "0")}`
+}
+
 /** Get visible page numbers for pagination (with ellipsis for long ranges). */
 export function getVisiblePageNumbers(
   currentPage: number,

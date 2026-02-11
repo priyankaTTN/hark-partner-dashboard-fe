@@ -38,13 +38,28 @@ export const menuItems: MenuItem[] = [
     children: [
       {
         title: "Suggested Clips",
-        url: "#",
+        url: "/dashboard/suggested-clips",
         icon: LightbulbIcon,
         isActive: true,
       },
       {
-        title: "Produced Clips",
-        url: "#",
+        title: "Curation Group",
+        url: "/dashboard/curation-group",
+        icon: LightbulbIcon,
+      },
+      {
+        title: "Episode Feed SXM",
+        url: "/dashboard/feed-sxm",
+        icon: RadioIcon,
+      },
+      {
+        title: "On Demand Episodes",
+        url: "/dashboard/on-demand-episodes",
+        icon: RadioIcon,
+      },
+      {
+        title: "Tracked Podcasts",
+        url: "/dashboard/tracked-podcasts",
         icon: RadioIcon,
       },
     ],
@@ -56,20 +71,20 @@ export const menuItems: MenuItem[] = [
     children: [
       {
         title: "Topic",
-        url: "#",
+        url: "/dashboard/topic",
         icon: LightbulbIcon,
       },
-   {
-    title: "Genre",
-    url: "#",
-    icon: LightbulbIcon,
-  },
-  {
-    title: "Tones",
-    url: "#",
-    icon: LightbulbIcon,
+      {
+        title: "Genre",
+        url: "/dashboard/genre",
+        icon: LightbulbIcon,
+      },
+      {
+        title: "Tones",
+        url: "/dashboard/tone",
+        icon: LightbulbIcon,
+      },
+    ],
   },
 ]
-  }]
-    
 
