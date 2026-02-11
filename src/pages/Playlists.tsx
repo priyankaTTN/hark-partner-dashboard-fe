@@ -630,7 +630,7 @@ export function Playlists() {
               </tr>
             ) : (
               questions.map((Q) => (
-                <tr key={Q._id} className="hover:bg-gray-50 transition-colors">
+                <tr key={Q._id} className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70">
                   <td className="px-6 py-4 text-sm text-gray-600">{Q._id}</td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">
                     <Link to={`/dashboard/playlists/${Q._id}`} className="text-primary hover:underline">

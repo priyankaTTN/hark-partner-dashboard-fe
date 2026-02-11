@@ -194,7 +194,7 @@ export function EpisodeFeedSXM() {
               </tr>
             ) : (
               episodes.map((ep) => (
-                <tr key={`${ep.podcastSlug}-${ep.episodeSlug}`} className="hover:bg-gray-50 transition-colors">
+                <tr key={`${ep.podcastSlug}-${ep.episodeSlug}`} className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70">
                   <td className="px-6 py-4 text-sm font-medium">
                     <button
                       type="button"

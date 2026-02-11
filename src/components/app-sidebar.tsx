@@ -94,9 +94,8 @@ export function AppSidebar() {
                             })
                           }}
                         >
-                          <div className="flex  gap-3 w-full">
-                       
-                            <span className="flex-1">{item.title}</span>
+                          <div className="flex items-center justify-start gap-3 w-full text-left">
+                            <span className="flex-1 text-left">{item.title}</span>
                             {item.action && (
                               <button
                                 type="button"
@@ -123,10 +122,9 @@ export function AppSidebar() {
                         >
                           <NavLink
                             to={getRouteFromTitle(item.title)}
-                            className="flex  gap-3 w-full"
+                            className="flex items-center justify-start gap-3 w-full text-left"
                           >
-                     
-                            <span className="flex-1">{item.title}</span>
+                            <span className="flex-1 text-left">{item.title}</span>
                             {item.action && (
                               <item.action className="size-4 shrink-0 ml-auto" />
                             )}
@@ -155,10 +153,9 @@ export function AppSidebar() {
                                 >
                                   <NavLink
                                     to={getRouteFromTitle(child.title, child.url)}
-                                    className="flex  gap-3 w-full"
+                                    className="flex items-center justify-start gap-3 w-full text-left"
                                   >
-                                   
-                                    <span className="flex-1 text-sm">{child.title}</span>
+                                    <span className="flex-1 text-sm text-left">{child.title}</span>
                                   </NavLink>
                                 </SidebarMenuButton>
                               )

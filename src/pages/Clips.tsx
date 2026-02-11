@@ -532,7 +532,7 @@ export function Clips() {
                   </tr>
                 ) : (
                   answers.map((answer) => (
-                    <tr key={answer._id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={answer._id} className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70">
                       <td className="px-6 py-4 text-sm">
                         <span className="inline-flex items-center gap-1">
                           {answer.customAttributes?.podcast?.s3audioUrl && (

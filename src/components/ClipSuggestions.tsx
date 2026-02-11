@@ -620,12 +620,6 @@ export function ClipSuggestions() {
       .sort((a, b) => a.groupKey.localeCompare(b.groupKey))
   }, [clips, groupByPodcast, groupByTopic])
 
-  // Combined loading state
-  const isLoading = clipsLoading
-
-
-
-
   const handleReset = () => {
     setSearchInput("")
     setNotableQuotesInput("")
@@ -643,6 +637,11 @@ export function ClipSuggestions() {
     setAppliedToDate(resetDates.toTimestamp)
     // Clear URL params using React Router
     setSearchParams(new URLSearchParams(), { replace: true })
+  }
+
+  // Full-page loader on initial load (same pattern as OnDemandEpisodes, EpisodeFeedSXM, etc.)
+  if (clipsLoading && clips.length === 0) {
+    return <LoadingState message="Loading suggested clips…" />
   }
 
   return (
@@ -840,10 +839,7 @@ export function ClipSuggestions() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4 relative">
-        {isLoading && (
-          <LoadingState overlay message="Loading clips…" />
-        )}
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden mt-4">
         <table className="w-full table-auto">
           <thead className="bg-gray-100 border-b border-gray-200">
             <tr>
@@ -871,14 +867,14 @@ export function ClipSuggestions() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {!isLoading && clips.length === 0 ? (
+            {clips.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                   No clips found matching your filters.
                 </td>
               </tr>
             ) : groupByPodcast || groupByTopic ? (
-              !isLoading && groupedClips.map((group, groupIndex) => (
+              groupedClips.map((group, groupIndex) => (
                 <React.Fragment key={group.groupKey}>
                   {/* Group Header Row */}
                   <tr className="bg-gray-50 border-t-2 border-gray-300">
@@ -901,7 +897,7 @@ export function ClipSuggestions() {
                     return (
                       <tr
                         key={`${clip.episodeSlug}-${groupIndex}-${clipIndex}`}
-                        className="hover:bg-gray-50 transition-colors"
+                        className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-600">{globalIndex + 1}</div>
@@ -938,10 +934,10 @@ export function ClipSuggestions() {
                 </React.Fragment>
               ))
             ) : (
-              !isLoading && clips.map((clip, index) => (
+              clips.map((clip, index) => (
                 <tr
                   key={`${clip.episodeSlug}-${index}`}
-                  className="hover:bg-gray-50 transition-colors"
+                  className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70"
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">{index + 1}</div>
@@ -980,7 +976,7 @@ export function ClipSuggestions() {
       </div>
 
       {/* Results Count */}
-      {!isLoading && (
+      {(
         <div className="text-sm text-gray-600 mt-4">
           {groupByPodcast || groupByTopic ? (
             <>

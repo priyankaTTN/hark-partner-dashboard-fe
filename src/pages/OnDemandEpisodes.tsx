@@ -200,7 +200,7 @@ export function OnDemandEpisodes() {
               </tr>
             ) : (
               episodeList.map((m) => (
-                <tr key={m._id} className="hover:bg-gray-50 transition-colors">
+                <tr key={m._id} className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70">
                   <td className="px-6 py-4">
                     {m.image ? (
                       <img src={m.image} alt="" className="h-10 w-10 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }} />

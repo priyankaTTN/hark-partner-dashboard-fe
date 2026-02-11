@@ -114,7 +114,7 @@ export function Tone() {
                 </tr>
               ) : (
                 toneList.map((tone) => (
-                  <tr key={tone._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={tone._id} className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70">
                     <td className="px-6 py-4 text-sm text-gray-600">{tone._id}</td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{tone.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{formatDate(tone.creationDate)}</td>

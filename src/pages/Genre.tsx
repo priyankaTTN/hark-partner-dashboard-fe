@@ -114,7 +114,7 @@ export function Genre() {
                 </tr>
               ) : (
                 genreList.map((genre) => (
-                  <tr key={genre._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={genre._id} className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70">
                     <td className="px-6 py-4 text-sm text-gray-600">{genre._id}</td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{genre.name}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{formatDate(genre.creationDate)}</td>

@@ -14,8 +14,8 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
   ({ collapsible = "none", className, children, ...props }, ref) => {
     const { isOpen } = useSidebar()
-    // Spec §3.3: sidebar 200px when open; minimized 50px
-    const width = collapsible === "icon" && !isOpen ? "w-[50px]" : "w-[200px]"
+    // Spec §3.3: sidebar 280px when open; minimized 50px
+    const width = collapsible === "icon" && !isOpen ? "w-[50px]" : "w-[280px]"
 
     return (
       <aside
@@ -52,7 +52,7 @@ const SidebarContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTM
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex-1 overflow-auto p-4", className)}
+      className={cn("flex-1 overflow-auto p-4 text-left", className)}
       {...props}
     />
   )
@@ -126,7 +126,7 @@ const SidebarMenuButton = React.forwardRef<HTMLButtonElement, SidebarMenuButtonP
     if (asChild && React.isValidElement(children)) {
       return React.cloneElement(children as React.ReactElement<any>, {
         className: cn(
-          "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          "flex w-full items-center justify-start gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left",
           "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
           isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
@@ -141,7 +141,7 @@ const SidebarMenuButton = React.forwardRef<HTMLButtonElement, SidebarMenuButtonP
       <button
         ref={ref}
         className={cn(
-          "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+          "flex w-full items-center justify-start gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left",
           "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
           isActive && "bg-sidebar-accent text-sidebar-accent-foreground",
@@ -183,8 +183,8 @@ SidebarTrigger.displayName = "SidebarTrigger"
 const SidebarInset = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
     const { isOpen } = useSidebar()
-    // Spec §3.3: margin-left so content is not hidden under fixed sidebar (200px / 50px minimized)
-    const marginLeft = isOpen ? "ml-[200px]" : "ml-[50px]"
+    // Spec §3.3: margin-left so content is not hidden under fixed sidebar (280px / 50px minimized)
+    const marginLeft = isOpen ? "ml-[280px]" : "ml-[50px]"
     return (
       <main
         ref={ref}

@@ -154,7 +154,7 @@ export function CurationGroup() {
                 </tr>
               ) : (
                 list.map((c) => (
-                  <tr key={c._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={c._id} className="hover:bg-gray-100 transition-colors odd:bg-white even:bg-gray-50/70">
                     <td className="px-6 py-4 text-sm text-gray-600">{c._id}</td>
                     <td className="px-6 py-4 text-sm font-medium">
                       <button
