@@ -24,10 +24,6 @@ export function TablePagination({
   currentPage,
   totalPages,
   onPageChange,
-  startIndex,
-  endIndex,
-  total,
-  itemLabel = "items",
 }: TablePaginationProps) {
   const pageNumbers = getVisiblePageNumbers(currentPage, totalPages)
 
