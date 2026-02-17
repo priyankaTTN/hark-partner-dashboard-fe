@@ -1,4 +1,4 @@
-import { DASHBOARD_BASE_URL } from "@/config/constant"
+import { DASHBOARD_BASE_URL, API_URL } from "@/config/constant"
 
 /**
  * Send Bearer token so dashboard API accepts the request.
@@ -227,6 +227,45 @@ export function getTonesUrl(): string {
   return `${DASHBOARD_BASE_URL}/api/v0/tones?limit=0`
 }
 
+/** Fetch tags for Create Clip modal; callback receives list (AUDIO_TRIMMER / TRANSCRIPT_DETAIL spec). */
+export function fetchAllTags(
+  _params: { limit: number },
+  callback: (list: Array<{ _id: string; name: string }>) => void
+): void {
+  fetchAPI<TagsListResponse>("/api/v0/tags?limit=0")
+    .then((res) => {
+      const list = res.tags ?? res.tagList ?? []
+      callback(list.map((t) => ({ _id: t._id ?? "", name: t.name ?? "" })))
+    })
+    .catch(() => callback([]))
+}
+
+/** Fetch genres for Create Clip modal. */
+export function fetchGenreTags(
+  _params: { limit: number },
+  callback: (list: Array<{ _id: string; name: string }>) => void
+): void {
+  fetchAPI<GenresListResponse>("/api/v0/genres?limit=0")
+    .then((res) => {
+      const list = res.genres ?? res.genreList ?? []
+      callback(list.map((g) => ({ _id: g._id ?? "", name: g.name ?? "" })))
+    })
+    .catch(() => callback([]))
+}
+
+/** Fetch tones for Create Clip modal. */
+export function fetchToneTags(
+  _params: { limit: number },
+  callback: (list: Array<{ _id: string; name: string }>) => void
+): void {
+  fetchAPI<TonesListResponse>("/api/v0/tones?limit=0")
+    .then((res) => {
+      const list = res.tones ?? res.toneList ?? []
+      callback(list.map((t) => ({ _id: t._id ?? "", name: t.name ?? "" })))
+    })
+    .catch(() => callback([]))
+}
+
 /** Set tags on question — POST /api/v0/entity/tags */
 export const setEntityTags = (entity: string | number, ids: string[]) =>
   fetchAPI<unknown>("/api/v0/entity/tags", {
@@ -398,6 +437,15 @@ export type AnswerDetailResponse = {
   [key: string]: unknown
 }
 
+/** POST /api/v1/answers — create clip (TRANSCRIPT_DETAIL / AUDIO_TRIMMER spec). */
+export function createAnswer(payload: Record<string, unknown>): Promise<{ data?: unknown }> {
+  return fetchAPI<{ data?: unknown }>("/api/v1/answers", {
+    method: "POST",
+    body: payload,
+    credentials: "include",
+  })
+}
+
 /** POST /api/v1/answers/:id — edit clip (SERVICES §4, ANSWER_DETAIL save) */
 export type EditAnswerPayload = {
   title?: string
@@ -422,6 +470,44 @@ export const updateAnswer = (id: string | number, body: EditAnswerPayload) =>
     body: body as Record<string, unknown>,
     credentials: "include",
   })
+
+// --- Suggested Clips (SUGGESTED_CLIP_SPEC) ---
+/** GET /api/v0/dashboard/clipsuggestions — list clips awaiting approval */
+export type SuggestedClipListItem = AnswerListItem & {
+  question?: { _id: string; title?: string }
+  originalCreator?: { uid: string; name?: string }
+  creator?: { uid: string; name?: string }
+  customAttributes?: {
+    podcast?: { podcast_name?: string; s3AudioUrl?: string; image?: string; artistName?: string; name?: string }
+    [key: string]: unknown
+  }
+}
+
+export function fetchAllSuggestedClips(options?: { showAll?: boolean }): Promise<SuggestedClipListItem[]> {
+  const qs = options?.showAll ? "?showall=true" : ""
+  return fetchAPI<SuggestedClipListItem[] | { data?: SuggestedClipListItem[] }>(`/api/v0/dashboard/clipsuggestions${qs}`).then(
+    (res) => (Array.isArray(res) ? res : res?.data ?? [])
+  )
+}
+
+/** POST /api/v0/answers/updatesuggestion — approve or reject suggested clip */
+export function approveSuggestedClips(
+  payload: { answerId: string; questionId: string; status: boolean },
+  callback?: (err?: Error) => void
+): Promise<{ approvedStatus?: boolean }> {
+  return fetchAPI<{ approvedStatus?: boolean }>("/api/v0/answers/updatesuggestion", {
+    method: "POST",
+    body: payload as unknown as Record<string, unknown>,
+  })
+    .then((res) => {
+      callback?.()
+      return res
+    })
+    .catch((err) => {
+      callback?.(err instanceof Error ? err : new Error(String(err)))
+      throw err
+    })
+}
 
 /** DELETE /api/v0/answers/:id (SERVICES §4) */
 export const deleteAnswer = (id: string | number) =>
@@ -740,6 +826,141 @@ export const getSxmEpisodeDetails = (podcastSlug: string, episodeSlug: string) =
     body: { podcastSlug, episodeSlug },
     credentials: "include",
   })
+
+// --- Transcript Detail (TRANSCRIPT_DETAIL_COMPONENT_SPEC) ---
+
+export type EpisodeDetailsResponse = {
+  details?: {
+    _id?: string
+    s3audioUrl?: string
+    audioUrl?: string
+    duration?: number
+    podcast_name?: string
+    name?: string
+    artistName?: string
+    podcastSlug?: string
+    episodeSlug?: string
+    pubDate?: string | number
+    [key: string]: unknown
+  }
+}
+
+/** POST /api/v0/web/external/episodeDetails — episode details for regular transcript route */
+export const getEpisodeDetails = (episodeSlug: string) =>
+  fetchAPI<EpisodeDetailsResponse>("/api/v0/web/external/episodeDetails", {
+    method: "POST",
+    body: { episodeSlug },
+    credentials: "include",
+  })
+
+/** Transcript segment as returned by API. May use string times (e.g. "00:00:36") or numbers. */
+export type TranscriptSegmentResponse = {
+  sentence?: string
+  /** Start time as HH:MM:SS string or seconds (number). */
+  start_time?: string | number
+  /** End time as HH:MM:SS string or seconds (number). */
+  end_time?: string | number
+  /** Optional millisecond-precision start, e.g. "00:00:36.495". */
+  start_time_ms?: string
+  /** Optional millisecond-precision end, e.g. "00:00:36.985". */
+  end_time_ms?: string
+  speaker?: string
+  [key: string]: unknown
+}
+
+/** Raw transcript API response: array of segments, array with { transcripts } wrapper, or object with numeric keys. */
+export type TranscriptRawResponse =
+  | TranscriptSegmentResponse[]
+  | Record<string, TranscriptSegmentResponse>
+  | { transcripts: TranscriptSegmentResponse[] }
+  | [{ transcripts: TranscriptSegmentResponse[] }]
+
+/** POST /api/v0/transcript/episode/search — transcript segments for highlight */
+export const getSingleEpisodeTranscript = (episodeSlug: string, podcastSlug: string) =>
+  fetchAPI<TranscriptRawResponse>("/api/v0/transcript/episode/search", {
+    method: "POST",
+    body: { episodeSlug, podcastSlug },
+    credentials: "include",
+  })
+
+export type VanillaVideoItem = {
+  audioUrl?: string
+  duration?: number
+  vanillaVideoSlug?: string
+  podcastSlug?: string
+  episodeSlug?: string
+  name?: string
+  [key: string]: unknown
+}
+
+/** GET /api/v0/dashboard/vanillaVideo — list vanilla videos */
+export const getVanillaVideoList = (params?: { skip?: number; limit?: number; qs?: string }) => {
+  const search = new URLSearchParams()
+  if (params?.skip != null) search.set("skip", String(params.skip))
+  if (params?.limit != null) search.set("limit", String(params.limit))
+  if (params?.qs) search.set("qs", params.qs)
+  const qs = search.toString()
+  return fetchAPI<VanillaVideoItem[]>(`/api/v0/dashboard/vanillaVideo${qs ? `?${qs}` : ""}`)
+}
+
+export type VoiceHarkClipItem = {
+  startTime: number
+  endTime: number
+  headline?: string
+  description?: string
+  notableQuote?: string
+  primaryTopicTag?: string | string[]
+  toneTag?: string | string[]
+  genreTag?: string | string[]
+  voiceIntro?: string
+  audioIntro?: string
+  speakers?: unknown[]
+  appealScore?: number
+  confidenceScore?: number
+  rating?: number
+  audioUrl?: string
+  [key: string]: unknown
+}
+
+export type VoiceHarkSuggestionItem = {
+  category_id: number
+  model_used: string
+  clips: VoiceHarkClipItem[]
+  examples?: unknown[]
+  promptsId?: string
+}
+
+/** POST api.harkaudio.com — VoiceHark clip suggestions (external API) */
+export async function getVoiceHarkClipSuggestions(params: {
+  episode_id: string
+  category_id?: number
+  llm_model?: string
+  curation_guidance?: string
+}): Promise<{ data: VoiceHarkSuggestionItem[] }> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "device_type": "web",
+    "browser": typeof navigator !== "undefined" ? navigator.userAgent : "",
+    "device_platform": "web",
+    "browser_version": "",
+  }
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 60000)
+  const res = await fetch(`${API_URL}/api/voicechat/v0/llm/generate/clip/suggestions/data`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(params),
+    signal: controller.signal,
+    credentials: "omit",
+  })
+  clearTimeout(timeout)
+  if (!res.ok) throw new Error(await res.text().catch(() => `Request failed: ${res.status}`))
+  return res.json() as Promise<{ data: VoiceHarkSuggestionItem[] }>
+}
 
 // --- On Demand Episodes (ON_DEMAND_EPISODES_SPEC) ---
 export type OnDemandEpisodeItem = {

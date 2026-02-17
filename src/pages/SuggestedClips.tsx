@@ -1,5 +1,6 @@
-import { ClipSuggestions } from "@/components/ClipSuggestions"
+import { SuggestedClipsPage } from "@/pages/SuggestedClipsPage"
 
+/** Suggested Clips page per SUGGESTED_CLIP_SPEC: table + Approve/Reject modal. */
 export function SuggestedClips() {
-  return <ClipSuggestions />
+  return <SuggestedClipsPage />
 }
