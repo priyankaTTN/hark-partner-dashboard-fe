@@ -14,6 +14,7 @@ import {
   saveAnswerMetaTags,
   updateAnswerClipLink,
   uploadIntroOutroOrImage,
+  lockClipAudioUrl,
   type AnswerDetailResponse,
   type EditAnswerPayload,
   type TagGenreToneItem,
@@ -25,10 +26,18 @@ import {
 } from "@/lib/api"
 import { IMAGE_PATH, WEB_URL } from "@/config/constant"
 import useFetch from "@/customHook/useFetch"
-import { formatDate } from "@/lib/utils"
+import { formatDate, clipTimeToSeconds, secondsToHMS } from "@/lib/utils"
+import { AudioTrimmer } from "@/components/AudioTrimmer"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { LoadingState } from "@/components/LoadingState"
 import { ErrorState } from "@/components/ErrorState"
 import {
@@ -43,6 +52,77 @@ function getIds(list: Array<{ _id: string; name?: string } | string> | undefined
   return list.map((t) => (typeof t === "string" ? t : t._id)).filter(Boolean)
 }
 
+/** Clean time dropdowns: Hours, Minutes, Seconds, Tenths using shadcn Select. */
+function TimeDropdowns({
+  valueSec,
+  onChangeSec,
+}: {
+  valueSec: number
+  onChangeSec: (sec: number) => void
+}) {
+  const { h, m, s, tenth } = secondsToHMS(valueSec)
+  const apply = (newH: number, newM: number, newS: number, newTenth: number) => {
+    const hhmmss = `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}:${String(newS).padStart(2, "0")}`
+    onChangeSec(clipTimeToSeconds(hhmmss, newTenth))
+  }
+  const triggerClass = "h-9 w-[4rem] font-mono"
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <Select value={String(h)} onValueChange={(v) => apply(Number(v), m, s, tenth)}>
+        <SelectTrigger className={triggerClass} aria-label="Hours">
+          <SelectValue>{String(h).padStart(2, "0")}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {Array.from({ length: 24 }, (_, i) => (
+            <SelectItem key={i} value={String(i)}>
+              {String(i).padStart(2, "0")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <span className="text-muted-foreground font-mono text-sm">:</span>
+      <Select value={String(m)} onValueChange={(v) => apply(h, Number(v), s, tenth)}>
+        <SelectTrigger className={triggerClass} aria-label="Minutes">
+          <SelectValue>{String(m).padStart(2, "0")}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {Array.from({ length: 60 }, (_, i) => (
+            <SelectItem key={i} value={String(i)}>
+              {String(i).padStart(2, "0")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <span className="text-muted-foreground font-mono text-sm">:</span>
+      <Select value={String(s)} onValueChange={(v) => apply(h, m, Number(v), tenth)}>
+        <SelectTrigger className={triggerClass} aria-label="Seconds">
+          <SelectValue>{String(s).padStart(2, "0")}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {Array.from({ length: 60 }, (_, i) => (
+            <SelectItem key={i} value={String(i)}>
+              {String(i).padStart(2, "0")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <span className="text-muted-foreground text-xs">.</span>
+      <Select value={String(tenth)} onValueChange={(v) => apply(h, m, s, Number(v))}>
+        <SelectTrigger className="h-9 w-[3rem] font-mono" aria-label="Tenths">
+          <SelectValue>{tenth}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
+            <SelectItem key={n} value={String(n)}>
+              {n}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
 const TITLE_MAX = 200
 const META_TITLE_MAX = 70
 const META_DESC_MAX = 160
@@ -55,6 +135,8 @@ export function ClipDetail() {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false)
   const [editTitle, setEditTitle] = useState(false)
   const [editDescription, setEditDescription] = useState(false)
+  /** When true, full clip edit mode: trimmer, time form, and Save/Cancel are shown. */
+  const [isEditMode, setIsEditMode] = useState(false)
   const [titleDraft, setTitleDraft] = useState("")
   const [descriptionDraft, setDescriptionDraft] = useState("")
   const [subTextDraft, setSubTextDraft] = useState("")
@@ -65,8 +147,13 @@ export function ClipDetail() {
   const [clipLinkTitle, setClipLinkTitle] = useState("")
   const [clipLinkUrl, setClipLinkUrl] = useState("")
   const [clipLinkSubmitting, setClipLinkSubmitting] = useState(false)
-  const [startTime, setStartTime] = useState<number>(0)
-  const [endTime, setEndTime] = useState<number>(0)
+  /** Clip interval in seconds (with tenths). Spec: HH:mm:ss + tenths → stored as float for API/trimmer. */
+  const [startTimeSec, setStartTimeSec] = useState<number>(0)
+  const [endTimeSec, setEndTimeSec] = useState<number>(0)
+  const [isAudioLocked, setIsAudioLocked] = useState(false)
+  const [lockSubmitting, setLockSubmitting] = useState(false)
+  const [isNewStartEndTime, setIsNewStartEndTime] = useState(false)
+  const [timeError, setTimeError] = useState<string | null>(null)
   const [aiIntroDraft, setAiIntroDraft] = useState("")
   const [shareImageUploading, setShareImageUploading] = useState(false)
   const [tagIds, setTagIds] = useState<string[]>([])
@@ -131,10 +218,18 @@ export function ClipDetail() {
   useEffect(() => {
     if (answer?.customAttributes?.podcast) {
       const p = answer.customAttributes.podcast
-      setStartTime(p.startTime ?? 0)
-      setEndTime(p.endTime ?? 0)
+      const start = Number(p.startTime) ?? 0
+      const end = Number(p.endTime) ?? 0
+      setStartTimeSec(Math.min(start, end))
+      setEndTimeSec(Math.max(start, end))
     }
   }, [answer?._id, answer?.customAttributes?.podcast?.startTime, answer?.customAttributes?.podcast?.endTime])
+
+  useEffect(() => {
+    if (answer && typeof answer.isAudioLocked === "boolean") {
+      setIsAudioLocked(answer.isAudioLocked)
+    }
+  }, [answer?._id, answer?.isAudioLocked])
 
   useEffect(() => {
     if (answer) {
@@ -202,23 +297,52 @@ export function ClipDetail() {
     setDescriptionDraft(answer?.description ?? "")
     setEditDescription(true)
   }
+  /** Enter full edit mode (trimmer, time form, title/description editable). */
+  const startEditClip = () => {
+    setTitleDraft(answer?.title ?? "")
+    setDescriptionDraft(answer?.description ?? "")
+    setEditTitle(true)
+    setEditDescription(true)
+    setIsEditMode(true)
+  }
   const cancelEdit = () => {
     setEditTitle(false)
     setEditDescription(false)
+    setIsEditMode(false)
+    setTimeError(null)
+    setRefreshKey((k) => k + 1)
+  }
+
+  /** Clip duration in seconds (from podcast or 0). */
+  const clipDurationSec = answer?.customAttributes?.podcast?.duration ?? 0
+
+  /** Spec: end > 0, end >= start, end <= duration. */
+  const validateTimeInterval = (): string | null => {
+    if (endTimeSec <= 0) return "End time must be greater than 0."
+    if (endTimeSec < startTimeSec) return "Start time cannot be greater than end time."
+    if (clipDurationSec > 0 && endTimeSec > clipDurationSec) return "End time cannot be greater than clip duration."
+    return null
   }
 
   /** Save clip — POST /api/v1/answers/:id (ANSWER_DETAIL save) */
   const handleSave = async () => {
     if (!id) return
+    const err = validateTimeInterval()
+    if (err) {
+      setTimeError(err)
+      return
+    }
+    setTimeError(null)
     const payload: EditAnswerPayload = {
       title: editTitle ? titleDraft.trim() : undefined,
       description: editDescription ? descriptionDraft.trim() : undefined,
       subText: subTextDraft.trim() || undefined,
       aiIntro: aiIntroDraft.trim() || undefined,
       podcast: {
-        startTime: startTime >= 0 ? startTime : undefined,
-        endTime: endTime > 0 ? endTime : undefined,
+        startTime: startTimeSec >= 0 ? startTimeSec : undefined,
+        endTime: endTimeSec > 0 ? endTimeSec : undefined,
       },
+      isNewStartEndTime: isNewStartEndTime || undefined,
     }
     if (!editTitle && !editDescription) {
       payload.title = answer?.title
@@ -229,9 +353,11 @@ export function ClipDetail() {
     setSaveSubmitting(true)
     try {
       await updateAnswer(id, payload)
-      setEditTitle(false)
-      setEditDescription(false)
-      setRefreshKey((k) => k + 1)
+    setEditTitle(false)
+    setEditDescription(false)
+    setIsEditMode(false)
+    setIsNewStartEndTime(false)
+    setRefreshKey((k) => k + 1)
     } finally {
       setSaveSubmitting(false)
     }
@@ -244,8 +370,46 @@ export function ClipDetail() {
     descriptionDraft !== (answer?.description ?? "") ||
     subTextDraft !== (answer?.subText ?? "") ||
     aiIntroDraft !== (answer?.customAttributes?.aiIntro ?? "") ||
-    startTime !== (answer?.customAttributes?.podcast?.startTime ?? 0) ||
-    endTime !== (answer?.customAttributes?.podcast?.endTime ?? 0)
+    startTimeSec !== (answer?.customAttributes?.podcast?.startTime ?? 0) ||
+    endTimeSec !== (answer?.customAttributes?.podcast?.endTime ?? 0)
+
+  /** Trimmer audio URL: prefer S3, then episode/clip URL (spec). */
+  const trimmerAudioUrl =
+    answer?.customAttributes?.podcast?.s3audioUrl ||
+    answer?.customAttributes?.podcast?.audioUrl ||
+    (answer?.customAttributes?.podcast as { clipAudioUrl?: string } | undefined)?.clipAudioUrl
+
+  const episodeData = answer?.customAttributes?.podcast
+  const peaksUrl =
+    episodeData?.podcastSlug && episodeData?.episodeSlug
+      ? `${IMAGE_PATH}/episode-waveforms/${episodeData.podcastSlug}/${episodeData.episodeSlug}/10pps.json`
+      : null
+
+  const isClipEditMode = isEditMode || editTitle || editDescription
+  const showTrimmerAndTimeForm = isClipEditMode && !isAudioLocked
+  const showViewPlayer = !showTrimmerAndTimeForm || isAudioLocked
+
+  const handleTrimChange = (start: number, end: number) => {
+    const s = Math.min(start, end)
+    const e = Math.max(start, end)
+    setStartTimeSec(s)
+    setEndTimeSec(e)
+    setIsNewStartEndTime(true)
+    setTimeError(null)
+  }
+
+  const handleLockAudioChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!id) return
+    const locked = e.target.checked
+    setLockSubmitting(true)
+    try {
+      await lockClipAudioUrl({ clipId: id, isAudioLocked: locked })
+      setIsAudioLocked(locked)
+      setRefreshKey((k) => k + 1)
+    } finally {
+      setLockSubmitting(false)
+    }
+  }
 
   const handleMetaSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -372,6 +536,15 @@ export function ClipDetail() {
           ← Back to Clips
         </Link>
         <div className="flex items-center gap-2">
+          {!isEditMode ? (
+            <Button variant="outline" size="sm" onClick={startEditClip}>
+              Edit clip
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={cancelEdit}>
+              Cancel
+            </Button>
+          )}
           {answer?.href && (
             <a
               href={`${WEB_URL}/${answer.href}`}
@@ -456,27 +629,126 @@ export function ClipDetail() {
           />
         </div>
 
-        {/* Start / End time */}
-        <div className="grid grid-cols-2 gap-4 max-w-md">
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-gray-500">Start time (sec)</Label>
-            <Input
-              type="number"
-              min={0}
-              value={startTime}
-              onChange={(e) => setStartTime(Number(e.target.value) || 0)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-gray-500">End time (sec)</Label>
-            <Input
-              type="number"
-              min={0}
-              value={endTime}
-              onChange={(e) => setEndTime(Number(e.target.value) || 0)}
-            />
-          </div>
+        {/* Lock clip audio — when locked, trimmer and time form are hidden (spec) */}
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="lock-clip-audio"
+            checked={isAudioLocked}
+            onChange={handleLockAudioChange}
+            disabled={lockSubmitting}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <Label htmlFor="lock-clip-audio" className="text-sm font-medium cursor-pointer">
+            Lock clip audio {lockSubmitting ? "(saving…)" : ""}
+          </Label>
         </div>
+
+        {/* Waveform: view mode (playback only) or edit mode (trimmer + time form) per spec */}
+        {trimmerAudioUrl && (
+          <div className="space-y-4">
+            {showViewPlayer && (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-500">Clip playback</Label>
+                <AudioTrimmer
+                  audioUrl={trimmerAudioUrl}
+                  duration={clipDurationSec || undefined}
+                  peaksUrl={peaksUrl ?? undefined}
+                  activeClip={{ startTime: startTimeSec, endTime: endTimeSec, title: answer?.title, description: answer?.description }}
+                  viewOnly
+                  hidePlayControl={false}
+                  className="rounded-md border border-gray-200 p-2"
+                />
+              </div>
+            )}
+            {showTrimmerAndTimeForm && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-gray-500">Trim clip (drag region to set start/end)</Label>
+                  <AudioTrimmer
+                    audioUrl={trimmerAudioUrl}
+                    duration={clipDurationSec || undefined}
+                    peaksUrl={peaksUrl ?? undefined}
+                    activeClip={{ startTime: startTimeSec, endTime: endTimeSec, title: answer?.title, description: answer?.description }}
+                    onTrimChange={handleTrimChange}
+                    hideEditingControls={false}
+                    showCreateClipButton={false}
+                    className="rounded-md border border-gray-200 p-2"
+                  />
+                </div>
+                {/* Time dropdowns: H / M / S / tenths (like reference time picker) */}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-4">
+                  <h3 className="text-sm font-medium text-gray-900">Start and end time</h3>
+                  {timeError && (
+                    <p className="text-sm text-destructive" role="alert">
+                      {timeError}
+                    </p>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-gray-500">Start time</Label>
+                      <TimeDropdowns
+                        valueSec={startTimeSec}
+                        onChangeSec={(sec) => {
+                          setStartTimeSec(Math.min(sec, endTimeSec))
+                          setIsNewStartEndTime(true)
+                          setTimeError(null)
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium text-gray-500">End time</Label>
+                      <TimeDropdowns
+                        valueSec={endTimeSec}
+                        onChangeSec={(sec) => {
+                          setEndTimeSec(Math.max(sec, startTimeSec))
+                          setIsNewStartEndTime(true)
+                          setTimeError(null)
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* When no trimmer URL but in edit mode: time dropdowns only (spec) */}
+        {showTrimmerAndTimeForm && !trimmerAudioUrl && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-4">
+            <h3 className="text-sm font-medium text-gray-900">Start and end time</h3>
+            {timeError && (
+              <p className="text-sm text-destructive" role="alert">
+                {timeError}
+              </p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-500">Start time</Label>
+                <TimeDropdowns
+                  valueSec={startTimeSec}
+                  onChangeSec={(sec) => {
+                    setStartTimeSec(Math.min(sec, endTimeSec))
+                    setIsNewStartEndTime(true)
+                    setTimeError(null)
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-500">End time</Label>
+                <TimeDropdowns
+                  valueSec={endTimeSec}
+                  onChangeSec={(sec) => {
+                    setEndTimeSec(Math.max(sec, startTimeSec))
+                    setIsNewStartEndTime(true)
+                    setTimeError(null)
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* AI Intro */}
         <div className="space-y-2">
@@ -626,8 +898,8 @@ export function ClipDetail() {
           </form>
         </div>
 
-        {/* Save main edits */}
-        {hasEditChanges && (
+        {/* Save main edits — show when in edit mode (so user can save/cancel) or when there are changes */}
+        {(isEditMode || hasEditChanges) && (
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={saveSubmitting}>
               {saveSubmitting ? "Saving…" : "Save changes"}

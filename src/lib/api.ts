@@ -421,9 +421,14 @@ export type AnswerDetailResponse = {
   customAttributes?: {
     podcast?: {
       s3audioUrl?: string
+      audioUrl?: string
+      clipAudioUrl?: string
       podcast_name?: string
       startTime?: number
       endTime?: number
+      duration?: number
+      podcastSlug?: string
+      episodeSlug?: string
       contentURI?: string
     }
     podcastIntro?: { contentURI?: string; isCustom?: boolean }
@@ -434,6 +439,8 @@ export type AnswerDetailResponse = {
   isCustomImagePath?: boolean
   customImagePath?: string
   voiceHarkClip?: boolean
+  /** When true, trimmer and time-based editing are hidden (ANSWERS_DETAIL_SPEC) */
+  isAudioLocked?: boolean
   [key: string]: unknown
 }
 
@@ -513,6 +520,14 @@ export function approveSuggestedClips(
 export const deleteAnswer = (id: string | number) =>
   fetchAPI<unknown>(`/api/v0/answers/${id}`, {
     method: "DELETE",
+    credentials: "include",
+  })
+
+/** POST /api/v0/dashboard/lock/clip/audio — lock/unlock clip audio (ANSWERS_DETAIL_SPEC) */
+export const lockClipAudioUrl = (payload: { clipId: string; isAudioLocked: boolean }) =>
+  fetchAPI<unknown>("/api/v0/dashboard/lock/clip/audio", {
+    method: "POST",
+    body: payload as Record<string, unknown>,
     credentials: "include",
   })
 
