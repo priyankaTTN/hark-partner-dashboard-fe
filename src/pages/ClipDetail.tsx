@@ -45,6 +45,7 @@ import {
   mapToCreatableOptions,
   getSelectedOptions,
 } from "@/components/CreatableMultiSelect"
+import { ChevronRight } from "lucide-react"
 
 /** Get tag/genre/tone ids from answer (objects or strings) */
 function getIds(list: Array<{ _id: string; name?: string } | string> | undefined): string[] {
@@ -124,6 +125,7 @@ function TimeDropdowns({
 }
 
 const TITLE_MAX = 200
+const DESCRIPTION_MAX = 500
 const META_TITLE_MAX = 70
 const META_DESC_MAX = 160
 
@@ -529,107 +531,131 @@ export function ClipDetail() {
     )
   }
 
+  const clipDurationMinutes = Math.max(1, Math.ceil((endTimeSec - startTimeSec) / 60))
+  const copyShareImagePermalink = () => {
+    if (!shareImageUrl) return
+    navigator.clipboard.writeText(shareImageUrl)
+  }
+
   return (
     <div className="flex flex-col pb-6 space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <Link to="/dashboard/clips" className="text-sm text-primary hover:underline">
-          ← Back to Clips
-        </Link>
-        <div className="flex items-center gap-2">
-          {!isEditMode ? (
-            <Button variant="outline" size="sm" onClick={startEditClip}>
-              Edit clip
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" onClick={cancelEdit}>
-              Cancel
-            </Button>
-          )}
-          {answer?.href && (
-            <a
-              href={`${WEB_URL}/${answer.href}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline"
+      {/* Top bar: emerald strip + breadcrumbs + Save (match PlaylistDetail) */}
+      <div className="bg-emerald-50/80 border-b border-gray-200 px-4 py-2 mb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <nav className="flex items-center gap-1 text-sm text-gray-600">
+            <Link to="/dashboard" className="hover:text-gray-900">Dashboard</Link>
+            <ChevronRight className="size-4 text-gray-400" />
+            <Link to="/dashboard/clips" className="hover:text-gray-900">Clips</Link>
+            <ChevronRight className="size-4 text-gray-400" />
+            <span className="text-gray-900 font-medium">Clip Detail</span>
+          </nav>
+          <div className="flex items-center gap-2">
+            {isEditMode && (
+              <Button variant="outline" size="sm" onClick={cancelEdit} disabled={saveSubmitting}>
+                Cancel
+              </Button>
+            )}
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              onClick={handleSave}
+              disabled={saveSubmitting}
             >
-              View on Web
-            </a>
-          )}
-          <Button variant="destructive" size="sm" onClick={openDeleteConfirm}>
-            Delete
-          </Button>
+              {saveSubmitting ? "Saving…" : "Save changes"}
+            </Button>
+            {!isEditMode && (
+              <Button variant="outline" size="sm" onClick={startEditClip}>
+                Edit clip
+              </Button>
+            )}
+            {answer?.href && (
+              <a href={`${WEB_URL}/${answer.href}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm">View on Web</Button>
+              </a>
+            )}
+            <Button variant="destructive" size="sm" onClick={openDeleteConfirm}>
+              Delete
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-white p-6 space-y-6">
-        {/* Title */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-gray-500">Title</Label>
-          {editTitle ? (
-            <div className="flex flex-col gap-2">
+        {/* Clip Title with character counter */}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-gray-700">Clip Title</Label>
+          {editTitle || isEditMode ? (
+            <div className="flex items-end gap-2">
               <Input
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value.slice(0, TITLE_MAX))}
                 maxLength={TITLE_MAX}
-                className="max-w-xl"
+                className="max-w-xl flex-1"
+                placeholder="Clip title"
               />
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
                 {titleDraft.length}/{TITLE_MAX}
               </span>
             </div>
           ) : (
             <p className="text-lg font-medium text-gray-900">
               {answer?.title ?? "—"}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="ml-2"
-                onClick={startEditTitle}
-              >
+              <Button type="button" variant="ghost" size="sm" className="ml-2" onClick={startEditTitle}>
                 Edit
               </Button>
             </p>
           )}
         </div>
 
-        {/* Description */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-gray-500">Description</Label>
-          {editDescription ? (
-            <textarea
-              value={descriptionDraft}
-              onChange={(e) => setDescriptionDraft(e.target.value)}
-              className="flex min-h-[80px] w-full max-w-xl rounded-md border border-input bg-transparent px-3 py-2 text-sm"
-              rows={4}
-            />
+        {/* Description with character counter */}
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-gray-700">Description</Label>
+          {editDescription || isEditMode ? (
+            <div className="space-y-1">
+              <textarea
+                value={descriptionDraft}
+                onChange={(e) => setDescriptionDraft(e.target.value.slice(0, DESCRIPTION_MAX))}
+                maxLength={DESCRIPTION_MAX}
+                className="flex min-h-[100px] w-full max-w-2xl rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                rows={4}
+                placeholder="You intro Description"
+              />
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {descriptionDraft.length}/{DESCRIPTION_MAX}
+              </span>
+            </div>
           ) : (
             <p className="text-sm text-gray-700 whitespace-pre-wrap">
               {answer?.description ?? "—"}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="ml-2"
-                onClick={startEditDescription}
-              >
+              <Button type="button" variant="ghost" size="sm" className="ml-2" onClick={startEditDescription}>
                 Edit
               </Button>
             </p>
           )}
         </div>
 
-        {/* Subtext */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-gray-500">Subtext</Label>
-          <Input
-            value={subTextDraft}
-            onChange={(e) => setSubTextDraft(e.target.value)}
-            className="max-w-xl"
-          />
-        </div>
+        {/* Enter Podcast Link */}
+        <form onSubmit={handleClipLinkSubmit} className="space-y-1.5">
+          <Label className="text-sm font-medium text-gray-700">Enter Podcast Link</Label>
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              value={clipLinkUrl}
+              onChange={(e) => setClipLinkUrl(e.target.value)}
+              placeholder="https://..."
+              className="max-w-xl"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={!clipLinkChangesMade || clipLinkSubmitting}
+            >
+              {clipLinkSubmitting ? "Saving…" : "Save"}
+            </Button>
+          </div>
+        </form>
 
-        {/* Lock clip audio — when locked, trimmer and time form are hidden (spec) */}
+        {/* Lock clip audio */}
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -644,12 +670,11 @@ export function ClipDetail() {
           </Label>
         </div>
 
-        {/* Waveform: view mode (playback only) or edit mode (trimmer + time form) per spec */}
+        {/* Audio: waveform + Start/End time row with Save and Download (reference layout) */}
         {trimmerAudioUrl && (
           <div className="space-y-4">
             {showViewPlayer && (
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-gray-500">Clip playback</Label>
                 <AudioTrimmer
                   audioUrl={trimmerAudioUrl}
                   duration={clipDurationSec || undefined}
@@ -663,117 +688,146 @@ export function ClipDetail() {
             )}
             {showTrimmerAndTimeForm && (
               <>
-                <div className="space-y-2">
-                  <Label className="text-xs font-medium text-gray-500">Trim clip (drag region to set start/end)</Label>
-                  <AudioTrimmer
-                    audioUrl={trimmerAudioUrl}
-                    duration={clipDurationSec || undefined}
-                    peaksUrl={peaksUrl ?? undefined}
-                    activeClip={{ startTime: startTimeSec, endTime: endTimeSec, title: answer?.title, description: answer?.description }}
-                    onTrimChange={handleTrimChange}
-                    hideEditingControls={false}
-                    showCreateClipButton={false}
-                    className="rounded-md border border-gray-200 p-2"
-                  />
-                </div>
-                {/* Time dropdowns: H / M / S / tenths (like reference time picker) */}
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-4">
-                  <h3 className="text-sm font-medium text-gray-900">Start and end time</h3>
+                <AudioTrimmer
+                  audioUrl={trimmerAudioUrl}
+                  duration={clipDurationSec || undefined}
+                  peaksUrl={peaksUrl ?? undefined}
+                  activeClip={{ startTime: startTimeSec, endTime: endTimeSec, title: answer?.title, description: answer?.description }}
+                  onTrimChange={handleTrimChange}
+                  hideEditingControls={false}
+                  showCreateClipButton={false}
+                  className="rounded-md border border-gray-200 p-2"
+                />
+                {/* Start Time / End Time row + Save + Highlight + Download */}
+                <div className="flex flex-wrap items-center gap-4 gap-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
                   {timeError && (
-                    <p className="text-sm text-destructive" role="alert">
+                    <p className="w-full text-sm text-destructive" role="alert">
                       {timeError}
                     </p>
                   )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-gray-500">Start time</Label>
-                      <TimeDropdowns
-                        valueSec={startTimeSec}
-                        onChangeSec={(sec) => {
-                          setStartTimeSec(Math.min(sec, endTimeSec))
-                          setIsNewStartEndTime(true)
-                          setTimeError(null)
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium text-gray-500">End time</Label>
-                      <TimeDropdowns
-                        valueSec={endTimeSec}
-                        onChangeSec={(sec) => {
-                          setEndTimeSec(Math.max(sec, startTimeSec))
-                          setIsNewStartEndTime(true)
-                          setTimeError(null)
-                        }}
-                      />
-                    </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">Start Time:</span>
+                    <TimeDropdowns
+                      valueSec={startTimeSec}
+                      onChangeSec={(sec) => {
+                        setStartTimeSec(Math.min(sec, endTimeSec))
+                        setIsNewStartEndTime(true)
+                        setTimeError(null)
+                      }}
+                    />
                   </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">End Time:</span>
+                    <TimeDropdowns
+                      valueSec={endTimeSec}
+                      onChangeSec={(sec) => {
+                        setEndTimeSec(Math.max(sec, startTimeSec))
+                        setIsNewStartEndTime(true)
+                        setTimeError(null)
+                      }}
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={handleSave}
+                    disabled={saveSubmitting}
+                  >
+                    {saveSubmitting ? "Saving…" : "Save"}
+                  </Button>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" className="h-4 w-4 rounded border-gray-300" readOnly checked />
+                    <span>Highlight the clip</span>
+                  </label>
+                  {trimmerAudioUrl && (
+                    <a
+                      href={trimmerAudioUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Download
+                    </a>
+                  )}
                 </div>
               </>
             )}
           </div>
         )}
 
-        {/* When no trimmer URL but in edit mode: time dropdowns only (spec) */}
+        {/* When no trimmer URL but in edit mode: time row only */}
         {showTrimmerAndTimeForm && !trimmerAudioUrl && (
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-4">
-            <h3 className="text-sm font-medium text-gray-900">Start and end time</h3>
+          <div className="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
             {timeError && (
-              <p className="text-sm text-destructive" role="alert">
-                {timeError}
-              </p>
+              <p className="w-full text-sm text-destructive" role="alert">{timeError}</p>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-gray-500">Start time</Label>
-                <TimeDropdowns
-                  valueSec={startTimeSec}
-                  onChangeSec={(sec) => {
-                    setStartTimeSec(Math.min(sec, endTimeSec))
-                    setIsNewStartEndTime(true)
-                    setTimeError(null)
-                  }}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-gray-500">End time</Label>
-                <TimeDropdowns
-                  valueSec={endTimeSec}
-                  onChangeSec={(sec) => {
-                    setEndTimeSec(Math.max(sec, startTimeSec))
-                    setIsNewStartEndTime(true)
-                    setTimeError(null)
-                  }}
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Start Time:</span>
+              <TimeDropdowns
+                valueSec={startTimeSec}
+                onChangeSec={(sec) => {
+                  setStartTimeSec(Math.min(sec, endTimeSec))
+                  setIsNewStartEndTime(true)
+                  setTimeError(null)
+                }}
+              />
             </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">End Time:</span>
+              <TimeDropdowns
+                valueSec={endTimeSec}
+                onChangeSec={(sec) => {
+                  setEndTimeSec(Math.max(sec, startTimeSec))
+                  setIsNewStartEndTime(true)
+                  setTimeError(null)
+                }}
+              />
+            </div>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSave} disabled={saveSubmitting}>
+              {saveSubmitting ? "Saving…" : "Save"}
+            </Button>
           </div>
         )}
 
         {/* AI Intro */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-gray-500">AI Intro</Label>
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium text-gray-700">AI Intro</Label>
           <textarea
             value={aiIntroDraft}
             onChange={(e) => setAiIntroDraft(e.target.value)}
             className="flex min-h-[60px] w-full max-w-xl rounded-md border border-input bg-transparent px-3 py-2 text-sm"
             rows={3}
+            placeholder="AI intro text"
           />
         </div>
 
-        {/* Share image */}
-        <div className="space-y-2">
-          <Label className="text-xs font-medium text-gray-500">Share image</Label>
-          <div className="flex items-start gap-4">
-            <img
-              src={shareImageUrl}
-              alt="Share card"
-              className="h-24 w-auto rounded border object-cover"
-            />
-            <div>
-              <label className="cursor-pointer">
-                <span className="text-sm text-primary hover:underline">
-                  {shareImageUploading ? "Uploading…" : "Upload image"}
+        {/* Share image — large preview card (reference design) */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium text-gray-700">Share Image</Label>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="bg-gray-100 rounded-lg border border-gray-200 overflow-hidden w-full max-w-md aspect-[4/3] flex flex-col p-4 relative">
+              <div className="absolute top-3 right-3 text-xs font-semibold text-gray-500">HARK</div>
+              <div className="flex flex-1 gap-3 mt-6 min-h-0">
+                <img src={shareImageUrl} alt="" className="w-24 h-24 rounded object-cover shrink-0" />
+                <div className="flex flex-col justify-center min-w-0 flex-1">
+                  <p className="text-[10px] uppercase tracking-wide text-gray-500">A MOMENT FROM THE PODCAST</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate mt-0.5">
+                    {answer?.customAttributes?.podcast?.podcast_name ?? "Podcast"}
+                  </p>
+                  <p className="text-xs text-gray-600 mt-1">{clipDurationMinutes} MINUTE LISTEN</p>
+                </div>
+              </div>
+              <p className="text-base font-bold text-gray-900 line-clamp-2 mt-2">{answer?.title ?? "Clip title"}</p>
+              <div className="mt-3 flex justify-end">
+                <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center">
+                  <div className="w-0 h-0 border-y-2 border-y-transparent border-l-[12px] border-l-white ml-1" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="cursor-pointer inline-flex">
+                <span className="inline-flex items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
+                  {shareImageUploading ? "Uploading…" : "Upload New Share Image"}
                 </span>
                 <input
                   type="file"
@@ -783,65 +837,68 @@ export function ClipDetail() {
                   onChange={handleShareImageUpload}
                 />
               </label>
+              <Button type="button" variant="outline" size="sm" onClick={copyShareImagePermalink}>
+                Copy Clip Image Permalink
+              </Button>
             </div>
           </div>
         </div>
 
-        {/* Tags / Genres / Tones */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-gray-500">Tags</Label>
-            <CreatableMultiSelect
-              options={tagOptions}
-              value={getSelectedOptions(tagOptions, tagIds)}
-              onChangeIds={setTagIds}
-              placeholder="Select or type to create…"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleSaveTags}
-              disabled={tagsSaving}
-            >
-              {tagsSaving ? "Saving…" : "Save tags"}
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-gray-500">Genres</Label>
-            <CreatableMultiSelect
-              options={genreOptions}
-              value={getSelectedOptions(genreOptions, genreIds)}
-              onChangeIds={setGenreIds}
-              placeholder="Select or type to create…"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleSaveGenres}
-              disabled={genresSaving}
-            >
-              {genresSaving ? "Saving…" : "Save genres"}
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs font-medium text-gray-500">Tones</Label>
-            <CreatableMultiSelect
-              options={toneOptions}
-              value={getSelectedOptions(toneOptions, toneIds)}
-              onChangeIds={setToneIds}
-              placeholder="Select or type to create…"
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleSaveTones}
-              disabled={tonesSaving}
-            >
-              {tonesSaving ? "Saving…" : "Save tones"}
-            </Button>
+        {/* Metadata: Tags, Genre, Themes, Sub Text — "Save to..." buttons */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-gray-900">Metadata</h3>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-start gap-2">
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-sm font-medium text-gray-700">Tags</Label>
+                <CreatableMultiSelect
+                  options={tagOptions}
+                  value={getSelectedOptions(tagOptions, tagIds)}
+                  onChangeIds={setTagIds}
+                  placeholder="Let us know"
+                />
+              </div>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white mt-7" onClick={handleSaveTags} disabled={tagsSaving}>
+                {tagsSaving ? "Saving…" : "Save to Tags"}
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-start gap-2">
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-sm font-medium text-gray-700">Genre</Label>
+                <CreatableMultiSelect
+                  options={genreOptions}
+                  value={getSelectedOptions(genreOptions, genreIds)}
+                  onChangeIds={setGenreIds}
+                  placeholder="Select or type to create…"
+                />
+              </div>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white mt-7" onClick={handleSaveGenres} disabled={genresSaving}>
+                {genresSaving ? "Saving…" : "Save to Genre"}
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-start gap-2">
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-sm font-medium text-gray-700">Themes</Label>
+                <CreatableMultiSelect
+                  options={toneOptions}
+                  value={getSelectedOptions(toneOptions, toneIds)}
+                  onChangeIds={setToneIds}
+                  placeholder="Select or type to create…"
+                />
+              </div>
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white mt-7" onClick={handleSaveTones} disabled={tonesSaving}>
+                {tonesSaving ? "Saving…" : "Save to Themes"}
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-start gap-2">
+              <div className="flex-1 min-w-[200px]">
+                <Label className="text-sm font-medium text-gray-700">Sub Text</Label>
+                <Input value={subTextDraft} onChange={(e) => setSubTextDraft(e.target.value)} placeholder="Sub text" className="mt-1" />
+              </div>
+              <Button size="sm" variant="outline" className="mt-7" disabled>
+                Save to Sub Text
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -867,7 +924,7 @@ export function ClipDetail() {
               />
               <span className="text-xs text-gray-500">{metaDesc.length}/{META_DESC_MAX}</span>
             </div>
-            <Button type="submit" size="sm" disabled={!metaChangesMade || metaSubmitting}>
+            <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={!metaChangesMade || metaSubmitting}>
               {metaSubmitting ? "Saving…" : "Save meta tags"}
             </Button>
           </form>
@@ -892,7 +949,7 @@ export function ClipDetail() {
                 onChange={(e) => setClipLinkUrl(e.target.value)}
               />
             </div>
-            <Button type="submit" size="sm" disabled={!clipLinkChangesMade || clipLinkSubmitting}>
+            <Button type="submit" size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={!clipLinkChangesMade || clipLinkSubmitting}>
               {clipLinkSubmitting ? "Saving…" : "Save clip link"}
             </Button>
           </form>
@@ -901,7 +958,7 @@ export function ClipDetail() {
         {/* Save main edits — show when in edit mode (so user can save/cancel) or when there are changes */}
         {(isEditMode || hasEditChanges) && (
           <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saveSubmitting}>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleSave} disabled={saveSubmitting}>
               {saveSubmitting ? "Saving…" : "Save changes"}
             </Button>
             <Button type="button" variant="outline" onClick={cancelEdit}>

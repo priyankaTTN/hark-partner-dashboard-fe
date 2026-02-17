@@ -25,6 +25,16 @@ export function formatTime(seconds: number | undefined | null): string {
   return `${m}:${String(sec).padStart(2, "0")}`
 }
 
+/** Format seconds to HH:mm:ss (e.g. 00:00:14). */
+export function formatDurationHMS(seconds: number | undefined | null): string {
+  if (seconds == null || Number.isNaN(Number(seconds))) return "00:00:00"
+  const s = Math.floor(Math.max(0, Number(seconds)))
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+}
+
 /** Clip time: seconds (float) ↔ HH:mm:ss + tenths (0–9). Spec: ANSWERS_DETAIL_COMPONENT_SPEC. */
 export function secondsToClipTime(sec: number): { hhmmss: string; tenth: number } {
   const whole = Math.floor(Number(sec) || 0)
