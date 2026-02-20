@@ -453,6 +453,81 @@ export function createAnswer(payload: Record<string, unknown>): Promise<{ data?:
   })
 }
 
+// --- AddClipsContainer (ADD_CLIPS_CONTAINER_SPEC) ---
+/** GET /api/v0/dashboard/questions/:id — fetch question detail for add-clip header */
+export function fetchQuestionDetail(id: string): Promise<QuestionDetailResponse> {
+  return fetchAPI<QuestionDetailResponse>(`/api/v0/dashboard/questions/${id}`, { credentials: "include" })
+}
+
+/** External podcast item from search */
+export type ExternalPodcastItem = {
+  title?: string
+  artistName?: string
+  image?: string
+  href?: string
+  slug?: string
+  podcastSlug?: string
+  collectionViewUrl?: string
+  [key: string]: unknown
+}
+
+/** GET /api/v0/external/search-podcast?q= — external podcast search (Step 1) */
+export function searchExternalPodcastList(q: string, from = 0, limit = 10): Promise<{ data?: ExternalPodcastItem[] }> {
+  const params = new URLSearchParams({ q: q || "", from: String(from), limit: String(limit) })
+  return fetchAPI<{ data?: ExternalPodcastItem[] }>(`/api/v0/external/search-podcast?${params.toString()}`, {
+    credentials: "include",
+  })
+}
+
+/** GET /api/v0/external/podcasts/all?qs= — internal podcast search (Step 1) */
+export function fetchInternalPodcasts(qs: string, from = 0, limit = 10): Promise<{ data?: ExternalPodcastItem[]; list?: ExternalPodcastItem[] }> {
+  const params = new URLSearchParams({ qs: qs || "", from: String(from), limit: String(limit) })
+  return fetchAPI<{ data?: ExternalPodcastItem[]; list?: ExternalPodcastItem[] }>(
+    `/api/v0/external/podcasts/all?${params.toString()}`,
+    { credentials: "include" }
+  )
+}
+
+/** Episode S3 URL response — container polls until status === "FINISHED" */
+export type GetEpisodeS3UrlResponse = {
+  status?: "IN_PROGRESS" | "FINISHED" | "ERROR"
+  s3audioUrl?: string
+  message?: string
+  data?: { status?: string; s3audioUrl?: string }
+}
+
+/** POST /api/v0/external/getepisodes3url — get or create episode S3 URL (Step 2, poll until FINISHED) */
+export function getEpisodeS3Url(payload: {
+  id?: string
+  href?: string
+  podcastSlug?: string
+  audioUrl?: string
+  episodeSlug?: string
+  dashboard?: boolean
+}): Promise<GetEpisodeS3UrlResponse> {
+  return fetchAPI<GetEpisodeS3UrlResponse>("/api/v0/external/getepisodes3url", {
+    method: "POST",
+    body: { ...payload, dashboard: true } as Record<string, unknown>,
+    credentials: "include",
+  }).then((res) => {
+    const d = (res as { data?: GetEpisodeS3UrlResponse })?.data
+    if (d && (d.status || d.s3audioUrl != null)) return d
+    return res as GetEpisodeS3UrlResponse
+  })
+}
+
+/** Harklist/playlist item for Step 4 dropdown */
+export type HarklistSearchItem = { _id: string; title?: string; [key: string]: unknown }
+
+/** GET /api/v0/entities/hark-search?type=playlist&qs= — search Harklists for add-clip (Step 4) */
+export function searchHarkListForAddClip(qs: string, from = 0, limit = 10): Promise<{ results?: unknown[]; dictionary?: Record<string, HarklistSearchItem> }> {
+  const params = new URLSearchParams({ type: "playlist", qs: qs || "", from: String(from), limit: String(limit) })
+  return fetchAPI<{ results?: unknown[]; dictionary?: Record<string, HarklistSearchItem> }>(
+    `/api/v0/entities/hark-search?${params.toString()}`,
+    { credentials: "include" }
+  )
+}
+
 /** POST /api/v1/answers/:id — edit clip (SERVICES §4, ANSWER_DETAIL save) */
 export type EditAnswerPayload = {
   title?: string

@@ -16,6 +16,7 @@ import { OnDemandEpisodes } from "@/pages/OnDemandEpisodes"
 import { TrackedPodcasts } from "@/pages/TrackedPodcasts"
 import { EpisodeDetail } from "@/pages/EpisodeDetail"
 import { TranscriptDetail } from "@/pages/TranscriptDetail"
+import { AddClipsContainer } from "@/containers/AddClipsContainer"
 
 /** Redirects /transcript-detail/:podcastSlug/:episodeSlug to dashboard path. */
 function RedirectTranscriptDetail() {
@@ -59,6 +60,8 @@ export function App() {
         <Route path="clips/:id" element={<ClipDetail />} />
         <Route path="playlists" element={<Playlists />} />
         <Route path="playlists/:id" element={<PlaylistDetail />} />
+        <Route path="add-clip" element={<AddClipsContainer />} />
+        <Route path="add-clip/:playlist" element={<AddClipsContainer />} />
         <Route path="curation-group" element={<CurationGroup />} />
         <Route path="feed-sxm" element={<EpisodeFeedSXM />} />
         <Route path="on-demand-episodes" element={<Navigate to="/dashboard/on-demand-episodes/page/1" replace />} />
