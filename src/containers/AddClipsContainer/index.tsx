@@ -76,7 +76,6 @@ export function AddClipsContainer({ isfromMakeClip = false, playlistDetail: play
 
   // Step 2 — Episode
   const [episodeList, setEpisodeList] = React.useState<EpisodeDetailItem[]>([])
-  const [allEpisodeData, setAllEpisodeData] = React.useState<EpisodeDetailItem[]>([])
   const [episodeQs, setEpisodeQs] = React.useState("")
   const [selectedEpisode, setSelectedEpisode] = React.useState<EpisodeDetailItem | null>(null)
   const [episodesLoading, setEpisodesLoading] = React.useState(false)
@@ -85,7 +84,6 @@ export function AddClipsContainer({ isfromMakeClip = false, playlistDetail: play
   // Step 3 — Player / Trim
   const [s3AudioUrl, setS3AudioUrl] = React.useState<string | null>(null)
   const [isPlayerVisible, setIsPlayerVisible] = React.useState(false)
-  const [isDownloadEpisodeComplete, setIsDownloadEpisodeComplete] = React.useState(false)
   const [startTime, setStartTime] = React.useState(0)
   const [endTime, setEndTime] = React.useState(60)
   const [isSaveClip, setIsSaveClip] = React.useState(false)
@@ -107,8 +105,6 @@ export function AddClipsContainer({ isfromMakeClip = false, playlistDetail: play
 
   // Pre-fill / auto-select (SuggestClip)
   const [pendingEpisodeTitle, setPendingEpisodeTitle] = React.useState<string | null>(null)
-  const [pendingStartTime, setPendingStartTime] = React.useState<number | null>(null)
-  const [pendingEndTime, setPendingEndTime] = React.useState<number | null>(null)
   const [pendingPodcastSlug, setPendingPodcastSlug] = React.useState<string | null>(null)
   const [autoSelectInProgress, setAutoSelectInProgress] = React.useState(false)
 
@@ -150,8 +146,6 @@ export function AddClipsContainer({ isfromMakeClip = false, playlistDetail: play
           ? playlistDetail.name
           : null
     )
-    setPendingStartTime(typeof playlistDetail.startTime === "number" ? playlistDetail.startTime : null)
-    setPendingEndTime(typeof playlistDetail.endTime === "number" ? playlistDetail.endTime : null)
     setPendingPodcastSlug(typeof playlistDetail.podcastSlug === "string" ? playlistDetail.podcastSlug : null)
     if (playlistDetail.podcastName) {
       setPodcastqs(playlistDetail.podcastName)
@@ -197,11 +191,9 @@ export function AddClipsContainer({ isfromMakeClip = false, playlistDetail: play
     if (!selectedPodcast?.href) return
     setEpisodesLoading(true)
     setEpisodeList([])
-    setAllEpisodeData([])
     getPodcastEpisodesFromRss(selectedPodcast.href)
       .then(({ podcasts = [] }) => {
         const list = Array.isArray(podcasts) ? podcasts : []
-        setAllEpisodeData(list)
         setEpisodeList(list)
         setIsPodcastBlocked((list as EpisodeDetailItem[]).some((e) => (e as { isClippingBlocked?: boolean }).isClippingBlocked))
         // Auto-select episode when we have pendingEpisodeTitle from SuggestClip
@@ -214,7 +206,6 @@ export function AddClipsContainer({ isfromMakeClip = false, playlistDetail: play
         }
       })
       .catch(() => {
-        setAllEpisodeData([])
         setEpisodeList([])
       })
       .finally(() => setEpisodesLoading(false))
@@ -263,11 +254,9 @@ export function AddClipsContainer({ isfromMakeClip = false, playlistDetail: play
     if (!selectedPodcast?.href) return
     setEpisodesLoading(true)
     setEpisodeList([])
-    setAllEpisodeData([])
     getPodcastEpisodesFromRss(selectedPodcast.href)
       .then(({ podcasts = [] }) => {
         const list = Array.isArray(podcasts) ? podcasts : []
-        setAllEpisodeData(list)
         setEpisodeList(list)
         setIsPodcastBlocked((list as EpisodeDetailItem[]).some((e) => (e as { isClippingBlocked?: boolean }).isClippingBlocked))
       })
@@ -321,12 +310,10 @@ export function AddClipsContainer({ isfromMakeClip = false, playlistDetail: play
     try {
       if (ep.s3audioUrl) {
         setS3AudioUrl(ep.s3audioUrl)
-        setIsDownloadEpisodeComplete(true)
         setIsPlayerVisible(true)
       } else {
         const url = await pollEpisodeS3Url(selectedEpisode)
         setS3AudioUrl(url)
-        setIsDownloadEpisodeComplete(true)
         setIsPlayerVisible(true)
       }
     } catch (err) {
